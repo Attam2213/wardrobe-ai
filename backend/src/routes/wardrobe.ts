@@ -304,18 +304,39 @@ export function wardrobeRouter(params: { prisma: PrismaClient; minio: MinioConfi
         const child = spawn(python, [scriptPath], { stdio: ["pipe", "pipe", "pipe"] });
         const chunks: Buffer[] = [];
         const errChunks: Buffer[] = [];
+        let settled = false;
+
+        const settleOk = (buf: Buffer) => {
+          if (settled) return;
+          settled = true;
+          resolve(buf);
+        };
+
+        const settleErr = (e: unknown) => {
+          if (settled) return;
+          settled = true;
+          reject(e);
+        };
 
         child.stdout.on("data", (c) => chunks.push(Buffer.isBuffer(c) ? c : Buffer.from(c)));
         child.stderr.on("data", (c) => errChunks.push(Buffer.isBuffer(c) ? c : Buffer.from(c)));
-        child.on("error", (e) => reject(e));
+        child.on("error", (e) => settleErr(e));
         child.on("close", (code) => {
-          if (code === 0) return resolve(Buffer.concat(chunks));
+          if (code === 0) return settleOk(Buffer.concat(chunks));
           const msg = Buffer.concat(errChunks).toString("utf8").slice(0, 600) || `exit ${code ?? "?"}`;
-          reject(new Error(msg));
+          settleErr(new Error(msg));
         });
 
-        child.stdin.write(input);
-        child.stdin.end();
+        child.stdin.on("error", (e: any) => {
+          if (e?.code === "EPIPE") return;
+        });
+
+        try {
+          child.stdin.end(input);
+        } catch (e: any) {
+          if (e?.code === "EPIPE") return;
+          settleErr(e);
+        }
       });
 
       if (!out.byteLength) {
