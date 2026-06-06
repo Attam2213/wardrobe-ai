@@ -1126,6 +1126,9 @@ async function loadWeather(lat, lng) {
 
 async function getGpsPosition() {
   if (!("geolocation" in navigator)) throw new Error("Геолокация не поддерживается в этом браузере.");
+  if (!window.isSecureContext) {
+    throw new Error("GPS работает только по HTTPS. Введи координаты вручную (Lat/Lng) или подключи домен + HTTPS.");
+  }
   return new Promise((resolve, reject) => {
     navigator.geolocation.getCurrentPosition(
       (p) => resolve(p),
