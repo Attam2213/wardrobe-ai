@@ -57,7 +57,7 @@ if ! sudo -u "${APP_USER}" -H bash -lc "'${SEGMENT_PY}' -m pip --version" >/dev/
   sudo -u "${APP_USER}" -H bash -lc "python3 -m venv '${VENV_DIR}'"
   sudo -u "${APP_USER}" -H bash -lc "'${SEGMENT_PY}' -m ensurepip --upgrade" || true
 fi
-sudo -u "${APP_USER}" -H bash -lc "'${SEGMENT_PY}' -m pip install --upgrade pip && '${SEGMENT_PY}' -m pip install --upgrade rembg pillow"
+sudo -u "${APP_USER}" -H bash -lc "'${SEGMENT_PY}' -m pip install --upgrade pip && '${SEGMENT_PY}' -m pip install --upgrade rembg pillow onnxruntime numpy"
 if [[ -f "${ENV_FILE}" ]]; then
   if grep -qE '^SEGMENT_PYTHON=' "${ENV_FILE}" 2>/dev/null; then
     TMP_ENV="$(mktemp)"

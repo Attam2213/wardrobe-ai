@@ -758,7 +758,7 @@ async function aiCutoutAddPhotoFromRect() {
     setText(els.addCutoutStatus, "Готово");
   } catch (e) {
     const msg = e instanceof Error ? e.message : String(e);
-    setText(els.addCutoutStatus, `Не получилось вырезать (сервер): ${String(msg || "").slice(0, 220)}`);
+    setText(els.addCutoutStatus, `Не получилось вырезать (сервер): ${String(msg || "").slice(0, 2000)}`);
     return;
   }
 
