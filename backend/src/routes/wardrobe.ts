@@ -334,7 +334,7 @@ export function wardrobeRouter(params: { prisma: PrismaClient; minio: MinioConfi
         child.on("error", (e) => settleErr(e));
         child.on("close", (code) => {
           if (code === 0) return settleOk(Buffer.concat(chunks));
-          const msg = Buffer.concat(errChunks).toString("utf8").slice(0, 600) || `exit ${code ?? "?"}`;
+          const msg = Buffer.concat(errChunks).toString("utf8").slice(0, 3000) || `exit ${code ?? "?"}`;
           settleErr(new Error(msg));
         });
 

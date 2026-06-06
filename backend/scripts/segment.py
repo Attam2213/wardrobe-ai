@@ -3,7 +3,10 @@ import os
 import sys
 
 from PIL import Image, ImageOps
-from rembg import new_session, remove
+try:
+    from rembg import new_session, remove
+except Exception:
+    from rembg import remove
 
 
 os.environ.setdefault("OMP_NUM_THREADS", "1")
@@ -12,7 +15,12 @@ os.environ.setdefault("MKL_NUM_THREADS", "1")
 os.environ.setdefault("VECLIB_MAXIMUM_THREADS", "1")
 os.environ.setdefault("NUMEXPR_NUM_THREADS", "1")
 
-SESSION = new_session("u2netp")
+SESSION = None
+try:
+    if "new_session" in globals():
+        SESSION = new_session("u2netp")
+except Exception:
+    SESSION = None
 
 
 def main() -> int:
@@ -28,7 +36,10 @@ def main() -> int:
     except Exception:
         img.thumbnail((1024, 1024))
 
-    out = remove(img, session=SESSION)
+    if SESSION is not None:
+        out = remove(img, session=SESSION)
+    else:
+        out = remove(img)
 
     if isinstance(out, (bytes, bytearray)):
         sys.stdout.buffer.write(out)

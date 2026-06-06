@@ -21,7 +21,7 @@ fi
 export DEBIAN_FRONTEND=noninteractive
 
 apt-get update -y
-apt-get install -y curl ca-certificates git nginx openssl python3 python3-venv python3-pip
+apt-get install -y curl ca-certificates git nginx openssl python3 python3-venv python3-pip libgl1 libglib2.0-0 libgomp1
 
 if ! command -v node >/dev/null 2>&1; then
   curl -fsSL https://deb.nodesource.com/setup_20.x | bash -

@@ -44,6 +44,8 @@ if ! dpkg -s python3-venv >/dev/null 2>&1 || ! dpkg -s python3-pip >/dev/null 2>
   apt-get update -y
   apt-get install -y python3-venv python3-pip
 fi
+apt-get update -y
+apt-get install -y libgl1 libglib2.0-0 libgomp1
 
 VENV_DIR="${APP_DIR}/venv"
 SEGMENT_PY="${VENV_DIR}/bin/python"
