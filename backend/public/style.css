@@ -392,6 +392,11 @@ h3 {
   display: flex;
 }
 
+#addModeRectBtn,
+#addModeLassoBtn {
+  white-space: nowrap;
+}
+
 #addCutoutStatus {
   display: none;
 }

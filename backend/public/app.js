@@ -50,7 +50,10 @@ const els = {
   addCropHint: document.getElementById("addCropHint"),
   addCropCanvas: document.getElementById("addCropCanvas"),
   addCropActions: document.getElementById("addCropActions"),
+  addModeRectBtn: document.getElementById("addModeRectBtn"),
+  addModeLassoBtn: document.getElementById("addModeLassoBtn"),
   addCropBtn: document.getElementById("addCropBtn"),
+  addLassoBtn: document.getElementById("addLassoBtn"),
   addCropResetBtn: document.getElementById("addCropResetBtn"),
   addCutoutBtn: document.getElementById("addCutoutBtn"),
   addCutoutStatus: document.getElementById("addCutoutStatus"),
@@ -123,6 +126,10 @@ const state = {
   addCropRect: null,
   addCropActive: false,
   addCropPointerId: null,
+  addSelectMode: "lasso",
+  addLassoPoints: [],
+  addLassoActive: false,
+  addLassoPointerId: null,
 };
 
 function setText(el, text) {
@@ -573,6 +580,39 @@ function redrawAddCropOverlay() {
   if (!ctx) return;
   ctx.clearRect(0, 0, canvas.width, canvas.height);
 
+  const lineW = Math.max(2, Math.round((window.devicePixelRatio || 1) * 1.25));
+
+  if (state.addSelectMode === "lasso") {
+    const pts = Array.isArray(state.addLassoPoints) ? state.addLassoPoints : [];
+    const ok = pts.length >= 6;
+    if (els.addLassoBtn) els.addLassoBtn.disabled = !ok;
+    if (els.addCropBtn) els.addCropBtn.disabled = true;
+
+    if (!ok) return;
+
+    ctx.fillStyle = "rgba(0,0,0,0.35)";
+    ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+    ctx.save();
+    ctx.globalCompositeOperation = "destination-out";
+    ctx.beginPath();
+    ctx.moveTo(pts[0], pts[1]);
+    for (let i = 2; i < pts.length; i += 2) ctx.lineTo(pts[i], pts[i + 1]);
+    ctx.closePath();
+    ctx.fill();
+    ctx.restore();
+
+    ctx.strokeStyle = "rgba(255,255,255,0.95)";
+    ctx.lineWidth = lineW;
+    ctx.beginPath();
+    ctx.moveTo(pts[0], pts[1]);
+    for (let i = 2; i < pts.length; i += 2) ctx.lineTo(pts[i], pts[i + 1]);
+    ctx.closePath();
+    ctx.stroke();
+    return;
+  }
+
+  if (els.addLassoBtn) els.addLassoBtn.disabled = true;
   const nr = normalizeRect(state.addCropRect);
   if (!nr || nr.w < 6 || nr.h < 6) {
     if (els.addCropBtn) els.addCropBtn.disabled = true;
@@ -580,13 +620,11 @@ function redrawAddCropOverlay() {
   }
 
   if (els.addCropBtn) els.addCropBtn.disabled = false;
-
   ctx.fillStyle = "rgba(0,0,0,0.35)";
   ctx.fillRect(0, 0, canvas.width, canvas.height);
   ctx.clearRect(nr.x, nr.y, nr.w, nr.h);
-
   ctx.strokeStyle = "rgba(255,255,255,0.95)";
-  ctx.lineWidth = Math.max(2, Math.round((window.devicePixelRatio || 1) * 1.25));
+  ctx.lineWidth = lineW;
   ctx.strokeRect(nr.x + 0.5, nr.y + 0.5, nr.w - 1, nr.h - 1);
 }
 
@@ -594,8 +632,120 @@ function resetAddCropSelection() {
   state.addCropRect = null;
   state.addCropActive = false;
   state.addCropPointerId = null;
+  state.addLassoPoints = [];
+  state.addLassoActive = false;
+  state.addLassoPointerId = null;
   if (els.addCropBtn) els.addCropBtn.disabled = true;
+  if (els.addLassoBtn) els.addLassoBtn.disabled = true;
   redrawAddCropOverlay();
+}
+
+function setAddSelectMode(mode) {
+  state.addSelectMode = mode === "rect" ? "rect" : "lasso";
+  if (state.addSelectMode === "rect") {
+    setText(els.addCropHint, "Выдели предмет рамкой — я сохраню только его.");
+  } else {
+    setText(els.addCropHint, "Обведи предмет на фото — я вырежу его без фона.");
+  }
+  if (els.addModeRectBtn) els.addModeRectBtn.classList.toggle("tab--active", state.addSelectMode === "rect");
+  if (els.addModeLassoBtn) els.addModeLassoBtn.classList.toggle("tab--active", state.addSelectMode === "lasso");
+  redrawAddCropOverlay();
+}
+
+async function cutoutAddPhotoFromLasso() {
+  const file = state.addPhotoFile;
+  const img = els.addPhotoPreview;
+  const canvas = els.addCropCanvas;
+  const pts = Array.isArray(state.addLassoPoints) ? state.addLassoPoints : [];
+  if (!file || !img || !canvas) return;
+  if (pts.length < 6) return;
+
+  const iw = img.naturalWidth || 0;
+  const ih = img.naturalHeight || 0;
+  if (!iw || !ih) return;
+
+  const sxScale = iw / canvas.width;
+  const syScale = ih / canvas.height;
+
+  let minX = Infinity;
+  let minY = Infinity;
+  let maxX = -Infinity;
+  let maxY = -Infinity;
+  for (let i = 0; i < pts.length; i += 2) {
+    const x = pts[i] * sxScale;
+    const y = pts[i + 1] * syScale;
+    if (x < minX) minX = x;
+    if (y < minY) minY = y;
+    if (x > maxX) maxX = x;
+    if (y > maxY) maxY = y;
+  }
+  if (!Number.isFinite(minX) || !Number.isFinite(minY) || !Number.isFinite(maxX) || !Number.isFinite(maxY)) return;
+
+  const pad = 8;
+  minX = clamp(Math.floor(minX) - pad, 0, iw);
+  minY = clamp(Math.floor(minY) - pad, 0, ih);
+  maxX = clamp(Math.ceil(maxX) + pad, 0, iw);
+  maxY = clamp(Math.ceil(maxY) + pad, 0, ih);
+  const outW = Math.max(1, Math.round(maxX - minX));
+  const outH = Math.max(1, Math.round(maxY - minY));
+
+  const out = document.createElement("canvas");
+  out.width = outW;
+  out.height = outH;
+  const octx = out.getContext("2d");
+  if (!octx) return;
+  octx.drawImage(img, minX, minY, outW, outH, 0, 0, outW, outH);
+
+  const mask = document.createElement("canvas");
+  mask.width = outW;
+  mask.height = outH;
+  const mctx = mask.getContext("2d");
+  if (!mctx) return;
+  mctx.fillStyle = "#000";
+  mctx.fillRect(0, 0, outW, outH);
+  mctx.fillStyle = "#fff";
+  mctx.beginPath();
+  mctx.moveTo(pts[0] * sxScale - minX, pts[1] * syScale - minY);
+  for (let i = 2; i < pts.length; i += 2) {
+    mctx.lineTo(pts[i] * sxScale - minX, pts[i + 1] * syScale - minY);
+  }
+  mctx.closePath();
+  mctx.fill();
+
+  octx.globalCompositeOperation = "destination-in";
+  octx.drawImage(mask, 0, 0);
+  octx.globalCompositeOperation = "source-over";
+
+  const blob = await new Promise((resolve) => out.toBlob(resolve, "image/png"));
+  if (!blob) return;
+  const cut = new File([blob], (file.name || "photo").replace(/\.[a-z0-9]+$/i, "") + ".png", { type: "image/png" });
+  state.addPhotoFile = cut;
+
+  resetAddCropSelection();
+  setAddSelectMode("lasso");
+
+  const url = URL.createObjectURL(cut);
+  setAddPhotoPreviewUrl(url);
+  if (els.addPhotoPreview) els.addPhotoPreview.src = url;
+  els.addPhotoPreviewWrap?.classList.add("preview--show");
+
+  const nonce = (state.addDetectNonce += 1);
+  setText(els.addAutoColor, "Определяю цвет…");
+  try {
+    const detected = await detectColorFromImageFile(cut);
+    if (state.addDetectNonce !== nonce) return;
+    if (!detected?.ru) {
+      setText(els.addAutoColor, "");
+      return;
+    }
+    const input = els.itemForm?.querySelector('input[name="color"]');
+    const current = String(input?.value ?? "").trim();
+    if (input && !current) input.value = detected.ru;
+    setText(els.addAutoColor, `Цвет на фото: ${detected.ru}`);
+  } catch {
+    if (state.addDetectNonce !== nonce) return;
+    setText(els.addAutoColor, "");
+  }
 }
 
 function setAddPhotoPreviewUrl(url) {
@@ -962,6 +1112,7 @@ function openAddModal({ prefillType } = {}) {
   setText(els.addCropHint, "");
   setText(els.addCutoutStatus, "");
   resetAddCropSelection();
+  setAddSelectMode("lasso");
 
   const typeSelect = els.itemForm?.querySelector('select[name="type"]');
   const colorInput = els.itemForm?.querySelector('input[name="color"]');
@@ -1459,7 +1610,7 @@ if (els.addPhotoInput) {
       return;
     }
     resetAddCropSelection();
-    setText(els.addCropHint, "Обведи предмет на фото — я сохраню только его.");
+    setAddSelectMode(state.addSelectMode);
     setText(els.addCutoutStatus, "");
 
     const url = URL.createObjectURL(f);
@@ -1500,23 +1651,51 @@ if (els.addCropCanvas) {
     const dpr = window.devicePixelRatio || 1;
     const x = clamp((e.clientX - rect.left) * dpr, 0, canvas.width);
     const y = clamp((e.clientY - rect.top) * dpr, 0, canvas.height);
-    state.addCropActive = true;
-    state.addCropPointerId = e.pointerId;
-    state.addCropRect = { x0: x, y0: y, x1: x, y1: y };
+    if (state.addSelectMode === "lasso") {
+      state.addLassoActive = true;
+      state.addLassoPointerId = e.pointerId;
+      state.addLassoPoints = [x, y];
+      state.addCropRect = null;
+      state.addCropActive = false;
+      state.addCropPointerId = null;
+    } else {
+      state.addCropActive = true;
+      state.addCropPointerId = e.pointerId;
+      state.addCropRect = { x0: x, y0: y, x1: x, y1: y };
+      state.addLassoActive = false;
+      state.addLassoPointerId = null;
+      state.addLassoPoints = [];
+    }
     canvas.setPointerCapture(e.pointerId);
     redrawAddCropOverlay();
   });
   els.addCropCanvas.addEventListener("pointermove", (e) => {
     if (!(e instanceof PointerEvent)) return;
-    if (!state.addCropActive) return;
-    if (state.addCropPointerId !== e.pointerId) return;
     const canvas = els.addCropCanvas;
     if (!canvas) return;
+    if (state.addSelectMode === "lasso") {
+      if (!state.addLassoActive) return;
+      if (state.addLassoPointerId !== e.pointerId) return;
+    } else {
+      if (!state.addCropActive) return;
+      if (state.addCropPointerId !== e.pointerId) return;
+    }
     const rect = canvas.getBoundingClientRect();
     const dpr = window.devicePixelRatio || 1;
     const x = clamp((e.clientX - rect.left) * dpr, 0, canvas.width);
     const y = clamp((e.clientY - rect.top) * dpr, 0, canvas.height);
-    if (state.addCropRect) {
+    if (state.addSelectMode === "lasso") {
+      const pts = Array.isArray(state.addLassoPoints) ? state.addLassoPoints : [];
+      const n = pts.length;
+      const lastX = n >= 2 ? pts[n - 2] : x;
+      const lastY = n >= 2 ? pts[n - 1] : y;
+      const dx = x - lastX;
+      const dy = y - lastY;
+      if (dx * dx + dy * dy >= 16) {
+        pts.push(x, y);
+        state.addLassoPoints = pts;
+      }
+    } else if (state.addCropRect) {
       state.addCropRect.x1 = x;
       state.addCropRect.y1 = y;
     }
@@ -1524,9 +1703,15 @@ if (els.addCropCanvas) {
   });
   const end = (e) => {
     if (!(e instanceof PointerEvent)) return;
-    if (state.addCropPointerId !== e.pointerId) return;
-    state.addCropActive = false;
-    state.addCropPointerId = null;
+    if (state.addSelectMode === "lasso") {
+      if (state.addLassoPointerId !== e.pointerId) return;
+      state.addLassoActive = false;
+      state.addLassoPointerId = null;
+    } else {
+      if (state.addCropPointerId !== e.pointerId) return;
+      state.addCropActive = false;
+      state.addCropPointerId = null;
+    }
     redrawAddCropOverlay();
   };
   els.addCropCanvas.addEventListener("pointerup", end);
@@ -1535,7 +1720,21 @@ if (els.addCropCanvas) {
 
 if (els.addCropResetBtn) els.addCropResetBtn.addEventListener("click", resetAddCropSelection);
 if (els.addCropBtn) els.addCropBtn.addEventListener("click", () => cropAddPhotoToSelection().catch(() => {}));
+if (els.addLassoBtn) els.addLassoBtn.addEventListener("click", () => cutoutAddPhotoFromLasso().catch(() => {}));
 if (els.addCutoutBtn) els.addCutoutBtn.addEventListener("click", () => cutoutAddPhoto().catch(() => {}));
+
+if (els.addModeRectBtn) {
+  els.addModeRectBtn.addEventListener("click", () => {
+    setAddSelectMode("rect");
+    resetAddCropSelection();
+  });
+}
+if (els.addModeLassoBtn) {
+  els.addModeLassoBtn.addEventListener("click", () => {
+    setAddSelectMode("lasso");
+    resetAddCropSelection();
+  });
+}
 
 if (els.addStepDetails) {
   els.addStepDetails.addEventListener("click", (e) => {
