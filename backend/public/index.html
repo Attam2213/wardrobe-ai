@@ -1,0 +1,522 @@
+<!doctype html>
+<html lang="ru">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Wardrobe AI</title>
+    <link rel="stylesheet" href="./style.css" />
+  </head>
+  <body>
+    <div class="app">
+      <main class="main">
+        <section class="card" id="authCard">
+          <h2>Вход</h2>
+          <div class="tabs">
+            <button class="tab tab--active" id="tabLogin" type="button">Логин</button>
+            <button class="tab" id="tabRegister" type="button">Регистрация</button>
+          </div>
+
+          <form id="authForm" class="form">
+            <label class="field">
+              <div class="field__label">Логин (email или username)</div>
+              <input class="input" name="login" type="text" autocomplete="username" required />
+            </label>
+
+            <label class="field">
+              <div class="field__label">Пароль</div>
+              <input class="input" name="password" type="password" autocomplete="current-password" minlength="1" required />
+            </label>
+
+            <label class="field field--hidden" id="usernameField">
+              <div class="field__label">Имя (опционально)</div>
+              <input class="input" name="username" type="text" autocomplete="nickname" />
+            </label>
+
+            <button class="btn" type="submit" id="authSubmit">Войти</button>
+          </form>
+
+          <div class="muted" id="authHint"></div>
+          <div class="error" id="authError"></div>
+        </section>
+
+        <section class="shell card--hidden" id="appShell">
+          <header class="topbar">
+            <div class="topbar__left">
+              <div class="topbar__greeting" id="greetingTitle">Доброе утро,</div>
+              <div class="topbar__name" id="greetingName">—</div>
+              <div class="topbar__meta" id="topWeatherChip">—</div>
+            </div>
+            <button class="btn btn--ghost" id="logoutBtn" type="button">
+              <svg class="icon" viewBox="0 0 24 24" aria-hidden="true">
+                <path d="M10 8V6a2 2 0 0 1 2-2h7a2 2 0 0 1 2 2v12a2 2 0 0 1-2 2h-7a2 2 0 0 1-2-2v-2" />
+                <path d="M15 12H3" />
+                <path d="M6 9l-3 3 3 3" />
+              </svg>
+              <span>Выйти</span>
+            </button>
+          </header>
+
+          <section class="content">
+            <section class="screen screen--active" id="screenHome">
+              <div class="card card--inner">
+                <div class="row row--space">
+                  <h3>AI предлагает на сегодня</h3>
+                  <button class="btn" id="homeSuggestBtn" type="button">
+                    <svg class="icon" viewBox="0 0 24 24" aria-hidden="true">
+                      <path d="M12 3l1.2 3.8L17 8l-3.8 1.2L12 13l-1.2-3.8L7 8l3.8-1.2L12 3z" />
+                      <path d="M19 11l.7 2.1L22 14l-2.3.9L19 17l-.7-2.1L16 14l2.3-.9L19 11z" />
+                    </svg>
+                    <span>Подобрать</span>
+                  </button>
+                </div>
+                <div class="muted" id="homeMeta"></div>
+                <div class="kv" id="homeOutfit"></div>
+                <div class="error" id="homeError"></div>
+              </div>
+
+              <div class="card card--inner">
+                <div class="row row--space">
+                  <h3>Мой гардероб</h3>
+                  <button class="btn btn--ghost" id="goWardrobeBtn" type="button">
+                    <svg class="icon" viewBox="0 0 24 24" aria-hidden="true">
+                      <path d="M4 7h16" />
+                      <path d="M4 12h16" />
+                      <path d="M4 17h16" />
+                    </svg>
+                    <span>Все вещи</span>
+                  </button>
+                </div>
+                <div class="grid grid--mini">
+                  <button class="tile" data-go="wardrobe" data-type="shirt" type="button">
+                    <span class="tile__icon" aria-hidden="true">
+                      <svg class="icon" viewBox="0 0 24 24">
+                        <path d="M8 4l4 2 4-2 4 3-3 4v13H7V11L4 7l4-3z" />
+                        <path d="M9 6l3 2 3-2" />
+                      </svg>
+                    </span>
+                    <span class="tile__label"><span>Рубашки</span><span class="tile__sub">верх</span></span>
+                  </button>
+                  <button class="tile" data-go="wardrobe" data-type="pants" type="button">
+                    <span class="tile__icon" aria-hidden="true">
+                      <svg class="icon" viewBox="0 0 24 24">
+                        <path d="M8 3h8l1 7-2 11h-3l-1-8-1 8H7L5 10l3-7z" />
+                      </svg>
+                    </span>
+                    <span class="tile__label"><span>Штаны</span><span class="tile__sub">низ</span></span>
+                  </button>
+                  <button class="tile" data-go="wardrobe" data-type="jacket" type="button">
+                    <span class="tile__icon" aria-hidden="true">
+                      <svg class="icon" viewBox="0 0 24 24">
+                        <path d="M8 4l4 2 4-2 3 5v14H5V9l3-5z" />
+                        <path d="M12 6v17" />
+                      </svg>
+                    </span>
+                    <span class="tile__label"><span>Куртки</span><span class="tile__sub">верх</span></span>
+                  </button>
+                  <button class="tile" data-go="wardrobe" data-type="shoes" type="button">
+                    <span class="tile__icon" aria-hidden="true">
+                      <svg class="icon" viewBox="0 0 24 24">
+                        <path d="M3 16c6 0 8-6 8-9 2 3 4 5 10 6v5H3v-2z" />
+                        <path d="M16 13v2" />
+                        <path d="M13 12.5v2" />
+                      </svg>
+                    </span>
+                    <span class="tile__label"><span>Обувь</span><span class="tile__sub">низ</span></span>
+                  </button>
+                  <button class="tile" data-go="wardrobe" data-type="accessories" type="button">
+                    <span class="tile__icon" aria-hidden="true">
+                      <svg class="icon" viewBox="0 0 24 24">
+                        <path d="M12 3l3 7h7l-5.5 4 2.1 7L12 17l-6.6 4 2.1-7L2 10h7l3-7z" />
+                      </svg>
+                    </span>
+                    <span class="tile__label"><span>Аксессуары</span><span class="tile__sub">детали</span></span>
+                  </button>
+                  <button class="tile tile--plus" data-go="wardrobe" type="button">
+                    <span class="tile__icon" aria-hidden="true">
+                      <svg class="icon" viewBox="0 0 24 24">
+                        <path d="M12 5v14" />
+                        <path d="M5 12h14" />
+                      </svg>
+                    </span>
+                    <span class="tile__label"><span>Добавить</span><span class="tile__sub">вещь</span></span>
+                  </button>
+                </div>
+              </div>
+            </section>
+
+            <section class="screen" id="screenWardrobe">
+              <div class="card card--inner">
+                <div class="row row--space">
+                  <h3>Гардероб</h3>
+                  <div class="row">
+                    <button class="btn btn--ghost" id="addItemBtn" type="button">
+                      <svg class="icon" viewBox="0 0 24 24" aria-hidden="true">
+                        <path d="M12 5v14" />
+                        <path d="M5 12h14" />
+                      </svg>
+                      <span>Добавить</span>
+                    </button>
+                    <button class="btn btn--ghost" id="refreshBtn" type="button">
+                    <svg class="icon" viewBox="0 0 24 24" aria-hidden="true">
+                      <path d="M20 12a8 8 0 1 1-2.3-5.7" />
+                      <path d="M20 4v6h-6" />
+                    </svg>
+                    <span>Обновить</span>
+                    </button>
+                  </div>
+                </div>
+                <label class="field">
+                  <div class="field__label">Фильтр по типу</div>
+                  <select class="input" id="filterType">
+                    <option value="">Все</option>
+                    <option value="shirt">Рубашка</option>
+                    <option value="pants">Штаны</option>
+                    <option value="jacket">Куртка</option>
+                    <option value="shoes">Обувь</option>
+                    <option value="accessories">Аксессуары</option>
+                    <option value="other">Другое</option>
+                  </select>
+                </label>
+                <div class="list" id="itemsList"></div>
+                <div class="error" id="itemError"></div>
+              </div>
+            </section>
+
+            <section class="screen" id="screenAvatar">
+              <div class="card card--inner">
+                <h3>Аватар</h3>
+                <div class="avatar" id="avatarStage">
+                  <div class="avatar__hint">Перетащи вещи на аватар</div>
+                  <div class="avatar__wear" id="avatarWear"></div>
+                </div>
+                <div class="muted">Тут пока 2D-примерка (просто выбранные вещи). 3D добавим позже.</div>
+              </div>
+
+              <div class="card card--inner">
+                <div class="row row--space">
+                  <h3>Инвентарь</h3>
+                  <button class="btn btn--ghost" id="avatarClearBtn" type="button">
+                    <svg class="icon" viewBox="0 0 24 24" aria-hidden="true">
+                      <path d="M3 6h18" />
+                      <path d="M8 6V4h8v2" />
+                      <path d="M6 6l1 16h10l1-16" />
+                    </svg>
+                    <span>Очистить</span>
+                  </button>
+                </div>
+                <div class="chips" id="avatarItems"></div>
+              </div>
+            </section>
+
+            <section class="screen" id="screenAssistant">
+              <div class="card card--inner">
+                <div class="row row--space">
+                  <h3>AI-стилист</h3>
+                  <button class="btn btn--ghost" id="useGpsBtn" type="button">
+                    <svg class="icon" viewBox="0 0 24 24" aria-hidden="true">
+                      <path d="M12 21s7-5 7-11a7 7 0 0 0-14 0c0 6 7 11 7 11z" />
+                      <path d="M12 10a2 2 0 1 0 0.001 0z" />
+                    </svg>
+                    <span>GPS</span>
+                  </button>
+                </div>
+                <form id="weatherForm" class="form">
+                  <div class="row">
+                    <label class="field">
+                      <div class="field__label">Lat</div>
+                      <input class="input" name="lat" inputmode="decimal" placeholder="55.75" />
+                    </label>
+                    <label class="field">
+                      <div class="field__label">Lng</div>
+                      <input class="input" name="lng" inputmode="decimal" placeholder="37.61" />
+                    </label>
+                  </div>
+                  <button class="btn btn--ghost" type="submit">
+                    <svg class="icon" viewBox="0 0 24 24" aria-hidden="true">
+                      <path d="M7 18a4 4 0 0 1 0-8 5 5 0 0 1 9.6 1.5A3.5 3.5 0 1 1 18 18H7z" />
+                    </svg>
+                    <span>Погода</span>
+                  </button>
+                </form>
+                <div class="kv" id="weatherOut"></div>
+                <div class="error" id="weatherError"></div>
+              </div>
+
+              <div class="card card--inner">
+                <form id="suggestForm" class="form">
+                  <div class="row">
+                    <label class="field">
+                      <div class="field__label">Температура (°C)</div>
+                      <input class="input" name="temperature" type="number" step="0.5" value="12" required />
+                    </label>
+                    <label class="field">
+                      <div class="field__label">Условие</div>
+                      <input class="input" name="condition" type="text" value="Rain" required />
+                    </label>
+                  </div>
+                  <label class="field">
+                    <div class="field__label">Повод (опционально)</div>
+                    <input class="input" name="occasion" type="text" placeholder="работа / свидание / прогулка" />
+                  </label>
+                  <div class="row">
+                    <button class="btn btn--ghost" id="suggestFromWeatherBtn" type="button">
+                      <svg class="icon" viewBox="0 0 24 24" aria-hidden="true">
+                        <path d="M3 12h18" />
+                        <path d="M5 7h14" />
+                        <path d="M7 17h10" />
+                      </svg>
+                      <span>По погоде</span>
+                    </button>
+                    <button class="btn" type="submit">
+                      <svg class="icon" viewBox="0 0 24 24" aria-hidden="true">
+                        <path d="M12 3l1.2 3.8L17 8l-3.8 1.2L12 13l-1.2-3.8L7 8l3.8-1.2L12 3z" />
+                        <path d="M19 11l.7 2.1L22 14l-2.3.9L19 17l-.7-2.1L16 14l2.3-.9L19 11z" />
+                      </svg>
+                      <span>Подобрать</span>
+                    </button>
+                  </div>
+                </form>
+                <div class="muted" id="suggestMeta"></div>
+                <div class="kv" id="suggestOut"></div>
+                <div class="error" id="suggestError"></div>
+                <div class="row">
+                  <button class="btn btn--ghost" id="feedbackLikeBtn" type="button">Нравится</button>
+                  <button class="btn btn--ghost" id="feedbackDislikeBtn" type="button">Не нравится</button>
+                </div>
+                <label class="field">
+                  <div class="field__label">Почему (если не подошло)</div>
+                  <select class="input" id="feedbackReason">
+                    <option value="">—</option>
+                    <option value="cold">Холодно</option>
+                    <option value="hot">Жарко</option>
+                    <option value="style">Не мой стиль</option>
+                    <option value="match">Не сочетается</option>
+                    <option value="comfort">Неудобно</option>
+                    <option value="other">Другое</option>
+                  </select>
+                </label>
+                <div class="muted" id="feedbackStatus"></div>
+                <button class="btn btn--ghost" id="applyToAvatarBtn" type="button">
+                  <svg class="icon" viewBox="0 0 24 24" aria-hidden="true">
+                    <path d="M12 12a4 4 0 1 0-0.001 0z" />
+                    <path d="M4 21a8 8 0 0 1 16 0" />
+                  </svg>
+                  <span>Примерить</span>
+                </button>
+              </div>
+
+              <div class="card card--inner">
+                <div class="row row--space">
+                  <h3>Маркетплейсы</h3>
+                </div>
+                <div class="muted" id="marketMeta">Подбери образ — и я дам ссылки на поиск по каждой вещи.</div>
+                <div class="list" id="marketList"></div>
+              </div>
+
+              <div class="card card--inner">
+                <div class="row row--space">
+                  <h3>Что докупить</h3>
+                </div>
+                <div class="muted" id="shoppingMeta">Подскажу, чего не хватает под текущую погоду.</div>
+                <div class="list" id="shoppingList"></div>
+              </div>
+            </section>
+
+            <section class="screen" id="screenSettings">
+              <div class="card card--inner">
+                <h3>Профиль</h3>
+                <div class="kv" id="profileOut"></div>
+                <div class="error" id="profileError"></div>
+              </div>
+            </section>
+          </section>
+
+          <nav class="nav">
+            <button class="nav__btn nav__btn--active" data-screen="home" type="button">
+              <svg class="icon" viewBox="0 0 24 24" aria-hidden="true">
+                <path d="M3 11l9-8 9 8" />
+                <path d="M5 10v11h14V10" />
+              </svg>
+              <span class="nav__label">Главная</span>
+            </button>
+            <button class="nav__btn" data-screen="wardrobe" type="button">
+              <svg class="icon" viewBox="0 0 24 24" aria-hidden="true">
+                <path d="M4 4h16v16H4z" />
+                <path d="M9 4v16" />
+                <path d="M15 4v16" />
+              </svg>
+              <span class="nav__label">Гардероб</span>
+            </button>
+            <button class="nav__btn" data-screen="avatar" type="button">
+              <svg class="icon" viewBox="0 0 24 24" aria-hidden="true">
+                <path d="M12 12a4 4 0 1 0-0.001 0z" />
+                <path d="M4 21a8 8 0 0 1 16 0" />
+              </svg>
+              <span class="nav__label">Аватар</span>
+            </button>
+            <button class="nav__btn" data-screen="assistant" type="button">
+              <svg class="icon" viewBox="0 0 24 24" aria-hidden="true">
+                <path d="M12 3l1.2 3.8L17 8l-3.8 1.2L12 13l-1.2-3.8L7 8l3.8-1.2L12 3z" />
+                <path d="M19 11l.7 2.1L22 14l-2.3.9L19 17l-.7-2.1L16 14l2.3-.9L19 11z" />
+              </svg>
+              <span class="nav__label">AI</span>
+            </button>
+            <button class="nav__btn" data-screen="settings" type="button">
+              <svg class="icon" viewBox="0 0 24 24" aria-hidden="true">
+                <path d="M12 15a3 3 0 1 0-0.001 0z" />
+                <path
+                  d="M19.4 15a7.8 7.8 0 0 0 .1-1 7.8 7.8 0 0 0-.1-1l2.1-1.6-2-3.4-2.5 1a7.5 7.5 0 0 0-1.7-1l-.4-2.7H9.1l-.4 2.7a7.5 7.5 0 0 0-1.7 1l-2.5-1-2 3.4L4.6 13a7.8 7.8 0 0 0-.1 1 7.8 7.8 0 0 0 .1 1l-2.1 1.6 2 3.4 2.5-1a7.5 7.5 0 0 0 1.7 1l.4 2.7h5.8l.4-2.7a7.5 7.5 0 0 0 1.7-1l2.5 1 2-3.4L19.4 15z"
+                />
+              </svg>
+              <span class="nav__label">Настройки</span>
+            </button>
+          </nav>
+
+          <div class="modal modal--hidden" id="addModal">
+            <div class="modal__backdrop" id="addModalBackdrop"></div>
+            <div class="modal__sheet" role="dialog" aria-modal="true" aria-labelledby="addModalTitle">
+              <div class="modal__header">
+                <div class="modal__title" id="addModalTitle">Новая вещь</div>
+                <button class="btn btn--ghost" id="addCloseBtn" type="button">
+                  <svg class="icon" viewBox="0 0 24 24" aria-hidden="true">
+                    <path d="M18 6L6 18" />
+                    <path d="M6 6l12 12" />
+                  </svg>
+                  <span>Закрыть</span>
+                </button>
+              </div>
+
+              <div class="modal__body">
+                <div class="step" id="addStepPhoto">
+                  <div class="muted">Сначала фото. Так быстрее на телефоне.</div>
+                  <label class="field">
+                    <div class="field__label">Фото</div>
+                    <input class="input" id="addPhotoInput" type="file" accept="image/*" capture="environment" />
+                  </label>
+                  <div class="muted" id="addAutoColor"></div>
+                  <div class="muted" id="addCropHint">Обведи предмет на фото — я сохраню только его.</div>
+                  <div class="preview" id="addPhotoPreviewWrap">
+                    <img id="addPhotoPreview" alt="" />
+                    <canvas id="addCropCanvas" aria-hidden="true"></canvas>
+                  </div>
+                  <div class="row" id="addCropActions">
+                    <button class="btn btn--ghost" id="addCropResetBtn" type="button">Сбросить</button>
+                    <button class="btn" id="addCropBtn" type="button">Обрезать</button>
+                    <button class="btn btn--ghost" id="addCutoutBtn" type="button">Вырезать фон</button>
+                  </div>
+                  <div class="muted" id="addCutoutStatus"></div>
+                  <div class="row">
+                    <button class="btn btn--ghost" id="addSkipPhotoBtn" type="button">Пропустить</button>
+                    <button class="btn" id="addNextBtn" type="button">Дальше</button>
+                  </div>
+                </div>
+
+                <div class="step step--hidden" id="addStepDetails">
+                  <form id="itemForm" class="form">
+                    <label class="field">
+                      <div class="field__label">Тип</div>
+                      <div class="chips">
+                        <button class="chip" type="button" data-type="shirt">Рубашка</button>
+                        <button class="chip" type="button" data-type="pants">Штаны</button>
+                        <button class="chip" type="button" data-type="jacket">Куртка</button>
+                        <button class="chip" type="button" data-type="shoes">Обувь</button>
+                        <button class="chip" type="button" data-type="accessories">Аксессуары</button>
+                        <button class="chip" type="button" data-type="other">Другое</button>
+                      </div>
+                      <select class="input" name="type" required>
+                        <option value="shirt">Рубашка</option>
+                        <option value="pants">Штаны</option>
+                        <option value="jacket">Куртка</option>
+                        <option value="shoes">Обувь</option>
+                        <option value="accessories">Аксессуары</option>
+                        <option value="other">Другое</option>
+                      </select>
+                    </label>
+
+                    <label class="field">
+                      <div class="field__label">Цвет (опционально)</div>
+                      <div class="chips">
+                        <button class="chip" type="button" data-color="white">Белый</button>
+                        <button class="chip" type="button" data-color="black">Чёрный</button>
+                        <button class="chip" type="button" data-color="blue">Синий</button>
+                        <button class="chip" type="button" data-color="beige">Бежевый</button>
+                      </div>
+                      <input class="input" name="color" type="text" placeholder="Например: белый, чёрный, синий" />
+                    </label>
+
+                    <label class="field">
+                      <div class="field__label">Бренд (опционально)</div>
+                      <input class="input" name="brand" type="text" placeholder="Например: Nike, Zara" />
+                    </label>
+
+                    <label class="field">
+                      <div class="field__label">Материал (опционально)</div>
+                      <input class="input" name="material" type="text" placeholder="Хлопок / шерсть / кожа..." />
+                    </label>
+
+                    <label class="field">
+                      <div class="field__label">Сезон (опционально)</div>
+                      <select class="input" name="season">
+                        <option value="">Не задан</option>
+                        <option value="all">Всесезон</option>
+                        <option value="summer">Лето</option>
+                        <option value="spring">Весна</option>
+                        <option value="autumn">Осень</option>
+                        <option value="winter">Зима</option>
+                      </select>
+                    </label>
+
+                    <label class="field">
+                      <div class="field__label">Теплота (1 — легко, 5 — очень тепло)</div>
+                      <select class="input" name="warmth">
+                        <option value="">Не задано</option>
+                        <option value="1">1</option>
+                        <option value="2">2</option>
+                        <option value="3">3</option>
+                        <option value="4">4</option>
+                        <option value="5">5</option>
+                      </select>
+                    </label>
+
+                    <label class="field">
+                      <div class="field__label">Стиль (опционально)</div>
+                      <div class="chips">
+                        <button class="chip" type="button" data-style="casual">Casual</button>
+                        <button class="chip" type="button" data-style="sport">Sport</button>
+                        <button class="chip" type="button" data-style="office">Office</button>
+                        <button class="chip" type="button" data-style="street">Street</button>
+                        <button class="chip" type="button" data-style="other">Other</button>
+                      </div>
+                      <select class="input" name="style">
+                        <option value="">Не задан</option>
+                        <option value="casual">Casual</option>
+                        <option value="sport">Sport</option>
+                        <option value="office">Office</option>
+                        <option value="street">Street</option>
+                        <option value="other">Other</option>
+                      </select>
+                    </label>
+
+                    <label class="field">
+                      <div class="field__label">Название</div>
+                      <input class="input" name="name" type="text" placeholder="Можно оставить пустым — я назову сам" />
+                    </label>
+
+                    <div class="row">
+                      <button class="btn btn--ghost" id="addBackBtn" type="button">Назад</button>
+                      <button class="btn" type="submit" id="addSaveBtn">Сохранить</button>
+                    </div>
+                  </form>
+                </div>
+              </div>
+
+              <div class="error" id="addModalError"></div>
+            </div>
+          </div>
+        </section>
+      </main>
+    </div>
+
+    <script type="module" src="./app.js"></script>
+  </body>
+</html>

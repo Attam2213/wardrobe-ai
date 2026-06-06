@@ -1,0 +1,103 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+enum WardrobeItemType {
+  shirt
+  pants
+  jacket
+  shoes
+  accessories
+  other
+}
+
+model User {
+  id           String         @id @default(uuid())
+  email        String?        @unique
+  passwordHash String?        @map("password_hash")
+  username     String?        @unique
+  avatarUrl    String?        @map("avatar_url")
+  geoLatitude  Float?         @map("geo_latitude")
+  geoLongitude Float?         @map("geo_longitude")
+  createdAt    DateTime       @default(now()) @map("created_at")
+
+  wardrobeItems WardrobeItem[]
+  outfits       Outfit[]
+  avatars       Avatar[]
+  refreshTokens RefreshToken[]
+
+  @@map("users")
+}
+
+model WardrobeItem {
+  id           String          @id @default(uuid())
+  userId       String          @map("user_id")
+  name         String
+  type         WardrobeItemType
+  color        String?
+  material     String?
+  brand        String?
+  size         String?
+  season       String?
+  warmth       Int?
+  style        String?
+  photoUrl     String?         @map("photo_url")
+  purchaseDate DateTime?       @map("purchase_date")
+  createdAt    DateTime        @default(now()) @map("created_at")
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@map("wardrobe_items")
+}
+
+model Outfit {
+  id              String   @id @default(uuid())
+  userId          String   @map("user_id")
+  name            String?
+  items           String
+  wornDate        DateTime? @map("worn_date")
+  weatherCondition String?  @map("weather_condition")
+  occasion        String?
+  aiGenerated     Boolean  @default(false) @map("ai_generated")
+  userFeedback    Int?     @map("user_feedback")
+  feedbackReason  String?  @map("feedback_reason")
+  feedbackAt      DateTime? @map("feedback_at")
+  createdAt       DateTime @default(now()) @map("created_at")
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@map("outfits")
+}
+
+model Avatar {
+  id        String   @id @default(uuid())
+  userId    String   @map("user_id")
+  modelUrl  String?  @map("model_url")
+  bodygramId String? @map("bodygram_id")
+  createdAt DateTime @default(now()) @map("created_at")
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@map("avatars")
+}
+
+model RefreshToken {
+  id        String   @id
+  userId    String   @map("user_id")
+  expiresAt DateTime @map("expires_at")
+  revokedAt DateTime? @map("revoked_at")
+  createdAt DateTime @default(now()) @map("created_at")
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@map("refresh_tokens")
+}
