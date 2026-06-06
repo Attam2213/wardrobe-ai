@@ -54,7 +54,10 @@ ADMIN_PASSWORD="$(openssl rand -base64 18 | tr -d '\n' | tr -d '/' | tr -d '+' |
 DATABASE_URL="file:${APP_DIR}/data/dev.db"
 
 ENV_FILE="${BACKEND_DIR}/.env"
-cat > "${ENV_FILE}" <<EOF
+CREATED_ADMIN_PASSWORD=""
+if [[ ! -f "${ENV_FILE}" ]]; then
+  CREATED_ADMIN_PASSWORD="${ADMIN_PASSWORD}"
+  cat > "${ENV_FILE}" <<EOF
 NODE_ENV=production
 PORT=${APP_PORT}
 DATABASE_URL=${DATABASE_URL}
@@ -63,6 +66,7 @@ JWT_REFRESH_SECRET=${JWT_REFRESH_SECRET}
 SEED_ADMIN=1
 ADMIN_PASSWORD=${ADMIN_PASSWORD}
 EOF
+fi
 chown "${APP_USER}:${APP_USER}" "${ENV_FILE}"
 chmod 600 "${ENV_FILE}"
 
@@ -121,4 +125,8 @@ systemctl reload nginx
 echo "OK"
 echo "URL: http://<server-ip>/app/"
 echo "Login: admin"
-echo "Password: ${ADMIN_PASSWORD}"
+if [[ -n "${CREATED_ADMIN_PASSWORD}" ]]; then
+  echo "Password: ${CREATED_ADMIN_PASSWORD}"
+else
+  echo "Password: (already set in ${ENV_FILE})"
+fi
