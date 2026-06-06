@@ -290,7 +290,18 @@ export function wardrobeRouter(params: { prisma: PrismaClient; minio: MinioConfi
       return;
     }
 
-    const python = process.env.SEGMENT_PYTHON || "python3";
+    let python = process.env.SEGMENT_PYTHON || "";
+    if (!python) {
+      const candidates = ["/opt/wardrobe-ai/venv/bin/python", "/opt/wardrobe-ai/venv/bin/python3"];
+      for (const p of candidates) {
+        try {
+          await access(p);
+          python = p;
+          break;
+        } catch {}
+      }
+    }
+    if (!python) python = "python3";
     const scriptPath = path.join(process.cwd(), "scripts", "segment.py");
     try {
       await access(scriptPath);

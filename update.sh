@@ -47,8 +47,14 @@ if [[ ! -x "${SEGMENT_PY}" ]]; then
   sudo -u "${APP_USER}" -H bash -lc "python3 -m venv '${VENV_DIR}'"
   sudo -u "${APP_USER}" -H bash -lc "'${SEGMENT_PY}' -m pip install --upgrade pip && '${SEGMENT_PY}' -m pip install rembg pillow"
 fi
-if [[ -f "${ENV_FILE}" ]] && ! grep -qE '^SEGMENT_PYTHON=' "${ENV_FILE}" 2>/dev/null; then
-  echo "SEGMENT_PYTHON=${SEGMENT_PY}" >> "${ENV_FILE}"
+if [[ -f "${ENV_FILE}" ]]; then
+  if grep -qE '^SEGMENT_PYTHON=' "${ENV_FILE}" 2>/dev/null; then
+    TMP_ENV="$(mktemp)"
+    awk -v v="SEGMENT_PYTHON=${SEGMENT_PY}" 'BEGIN{done=0} {if($0 ~ /^SEGMENT_PYTHON=/){print v; done=1} else {print $0}} END{if(done==0) print v}' "${ENV_FILE}" > "${TMP_ENV}"
+    mv "${TMP_ENV}" "${ENV_FILE}"
+  else
+    echo "SEGMENT_PYTHON=${SEGMENT_PY}" >> "${ENV_FILE}"
+  fi
 fi
 
 sudo -u "${APP_USER}" -H bash -lc "cd '${BACKEND_DIR}' && npm ci"
