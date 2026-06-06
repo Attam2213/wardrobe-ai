@@ -567,8 +567,8 @@ async function normalizeImageOrientationFile(file) {
     if (!ctx) return file;
     ctx.drawImage(img, 0, 0, w, h);
 
-    const blob = await new Promise((resolve) => out.toBlob(resolve, "image/png"));
-    if (blob) return new File([blob], `${baseName}.png`, { type: "image/png" });
+    const blob = await new Promise((resolve) => out.toBlob(resolve, "image/jpeg", 0.92));
+    if (blob) return new File([blob], `${baseName}.jpg`, { type: "image/jpeg" });
   } catch {
     if (typeof createImageBitmap !== "function") return file;
 
@@ -598,8 +598,8 @@ async function normalizeImageOrientationFile(file) {
       } catch {}
     }
 
-    const blob = await new Promise((resolve) => out.toBlob(resolve, "image/png"));
-    if (blob) return new File([blob], `${baseName}.png`, { type: "image/png" });
+    const blob = await new Promise((resolve) => out.toBlob(resolve, "image/jpeg", 0.92));
+    if (blob) return new File([blob], `${baseName}.jpg`, { type: "image/jpeg" });
   } finally {
     URL.revokeObjectURL(url);
   }
@@ -702,7 +702,7 @@ async function aiCutoutAddPhotoFromRect() {
 
   setText(els.addCutoutStatus, "Вырезаю…");
 
-  const blob = await new Promise((resolve) => crop.toBlob(resolve, "image/png"));
+  const blob = await new Promise((resolve) => crop.toBlob(resolve, "image/jpeg", 0.9));
   if (!blob) {
     setText(els.addCutoutStatus, "");
     return;
@@ -722,7 +722,7 @@ async function aiCutoutAddPhotoFromRect() {
   try {
     const resp = await apiFetch("/api/wardrobe/segment", {
       method: "POST",
-      body: { contentType: "image/png", imageBase64: base64 },
+      body: { contentType: "image/jpeg", imageBase64: base64 },
     });
 
     if (!resp.ok) {
