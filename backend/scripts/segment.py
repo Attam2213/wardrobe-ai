@@ -36,17 +36,51 @@ def main() -> int:
     except Exception:
         img.thumbnail((1024, 1024))
 
-    if SESSION is not None:
-        out = remove(img, session=SESSION)
-    else:
-        out = remove(img)
+    out = None
+    try:
+        if SESSION is not None:
+            out = remove(
+                img,
+                session=SESSION,
+                alpha_matting=True,
+                alpha_matting_foreground_threshold=240,
+                alpha_matting_background_threshold=10,
+                alpha_matting_erode_structure_size=12,
+            )
+        else:
+            out = remove(
+                img,
+                alpha_matting=True,
+                alpha_matting_foreground_threshold=240,
+                alpha_matting_background_threshold=10,
+                alpha_matting_erode_structure_size=12,
+            )
+    except TypeError:
+        if SESSION is not None:
+            out = remove(img, session=SESSION)
+        else:
+            out = remove(img)
 
     if isinstance(out, (bytes, bytearray)):
-        sys.stdout.buffer.write(out)
-        return 0
+        out_img = Image.open(io.BytesIO(out))
+    else:
+        out_img = out
+
+    out_img = out_img.convert("RGBA")
+    r, g, b, a = out_img.split()
+
+    def alpha_curve(v: int) -> int:
+        if v < 35:
+            return 0
+        if v > 240:
+            return 255
+        return int((v - 35) * 255 / (240 - 35))
+
+    a2 = a.point(alpha_curve)
+    out_img.putalpha(a2)
 
     buf = io.BytesIO()
-    out.save(buf, format="PNG")
+    out_img.save(buf, format="PNG", optimize=True)
     sys.stdout.buffer.write(buf.getvalue())
     return 0
 
