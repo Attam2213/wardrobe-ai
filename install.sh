@@ -52,8 +52,8 @@ VENV_DIR="${APP_DIR}/venv"
 SEGMENT_PY="${VENV_DIR}/bin/python"
 if [[ ! -x "${SEGMENT_PY}" ]]; then
   sudo -u "${APP_USER}" -H bash -lc "python3 -m venv '${VENV_DIR}'"
-  sudo -u "${APP_USER}" -H bash -lc "'${SEGMENT_PY}' -m pip install --upgrade pip && '${SEGMENT_PY}' -m pip install rembg pillow"
 fi
+sudo -u "${APP_USER}" -H bash -lc "'${SEGMENT_PY}' -m pip install --upgrade pip && '${SEGMENT_PY}' -m pip install --upgrade rembg pillow"
 
 JWT_ACCESS_SECRET="$(openssl rand -hex 32)"
 JWT_REFRESH_SECRET="$(openssl rand -hex 32)"
