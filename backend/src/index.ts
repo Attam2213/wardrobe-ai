@@ -67,6 +67,10 @@ app.use(express.json({ limit: "2mb" }));
 
 app.use("/app", express.static(path.join(__dirname, "..", "public")));
 
+app.get("/app", (req, res) => {
+  res.redirect(302, "/app/");
+});
+
 app.get("/", (req, res) => {
   res.redirect(302, "/app/");
 });
