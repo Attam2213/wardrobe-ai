@@ -20,7 +20,22 @@ if [[ ! -d "${REPO_DIR}/.git" ]]; then
   exit 1
 fi
 
-sudo -u "${APP_USER}" -H bash -lc "cd '${REPO_DIR}' && git fetch origin && git checkout '${BRANCH}' && git reset --hard 'origin/${BRANCH}'"
+before="$(sudo -u "${APP_USER}" -H bash -lc "cd '${REPO_DIR}' && git rev-parse --short HEAD" 2>/dev/null || true)"
+sudo -u "${APP_USER}" -H bash -lc "cd '${REPO_DIR}' && git fetch origin"
+remote="$(sudo -u "${APP_USER}" -H bash -lc "cd '${REPO_DIR}' && git rev-parse --short 'origin/${BRANCH}'" 2>/dev/null || true)"
+sudo -u "${APP_USER}" -H bash -lc "cd '${REPO_DIR}' && git checkout '${BRANCH}' && git reset --hard 'origin/${BRANCH}'"
+after="$(sudo -u "${APP_USER}" -H bash -lc "cd '${REPO_DIR}' && git rev-parse --short HEAD" 2>/dev/null || true)"
+
+echo "Repo: ${REPO_DIR}"
+echo "Branch: ${BRANCH}"
+echo "Before: ${before}"
+echo "Remote: ${remote}"
+echo "After:  ${after}"
+if [[ -n "${before}" && -n "${after}" && "${before}" != "${after}" ]]; then
+  echo "Changes:"
+  sudo -u "${APP_USER}" -H bash -lc "cd '${REPO_DIR}' && git log --oneline '${before}..${after}'" || true
+fi
+
 sudo -u "${APP_USER}" -H bash -lc "cd '${BACKEND_DIR}' && npm ci"
 sudo -u "${APP_USER}" -H bash -lc "cd '${BACKEND_DIR}' && npm run prisma:generate"
 sudo -u "${APP_USER}" -H bash -lc "cd '${BACKEND_DIR}' && npx prisma db push"
