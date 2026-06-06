@@ -60,6 +60,10 @@ server {
 
   client_max_body_size 12m;
 
+  location = /app {
+    return 302 /app/;
+  }
+
   location ^~ /app/ {
     alias ${BACKEND_DIR}/public/;
     try_files \$uri \$uri/ /app/index.html;
