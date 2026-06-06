@@ -38,13 +38,22 @@ fi
 
 if ! command -v python3 >/dev/null 2>&1; then
   apt-get update -y
-  apt-get install -y python3 python3-venv python3-pip
+  apt-get install -y python3
+fi
+if ! dpkg -s python3-venv >/dev/null 2>&1 || ! dpkg -s python3-pip >/dev/null 2>&1; then
+  apt-get update -y
+  apt-get install -y python3-venv python3-pip
 fi
 
 VENV_DIR="${APP_DIR}/venv"
 SEGMENT_PY="${VENV_DIR}/bin/python"
 if [[ ! -x "${SEGMENT_PY}" ]]; then
   sudo -u "${APP_USER}" -H bash -lc "python3 -m venv '${VENV_DIR}'"
+fi
+if ! sudo -u "${APP_USER}" -H bash -lc "'${SEGMENT_PY}' -m pip --version" >/dev/null 2>&1; then
+  rm -rf "${VENV_DIR}"
+  sudo -u "${APP_USER}" -H bash -lc "python3 -m venv '${VENV_DIR}'"
+  sudo -u "${APP_USER}" -H bash -lc "'${SEGMENT_PY}' -m ensurepip --upgrade" || true
 fi
 sudo -u "${APP_USER}" -H bash -lc "'${SEGMENT_PY}' -m pip install --upgrade pip && '${SEGMENT_PY}' -m pip install --upgrade rembg pillow"
 if [[ -f "${ENV_FILE}" ]]; then
