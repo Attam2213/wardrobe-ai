@@ -63,7 +63,7 @@ async function ensureAdminUser() {
 const app = express();
 app.use(helmet());
 app.use(cors({ origin: true, credentials: true }));
-app.use(express.json({ limit: "2mb" }));
+app.use(express.json({ limit: "25mb" }));
 
 app.use("/app", express.static(path.join(__dirname, "..", "public")));
 
