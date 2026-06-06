@@ -97,8 +97,8 @@ systemctl restart wardrobe-ai.service
 NGINX_SITE="/etc/nginx/sites-available/wardrobe-ai"
 cat > "${NGINX_SITE}" <<EOF
 server {
-  listen 80;
-  server_name ${DOMAIN};
+  listen 80 default_server;
+  server_name ${DOMAIN} _;
 
   client_max_body_size 12m;
 

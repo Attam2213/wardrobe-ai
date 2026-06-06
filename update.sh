@@ -28,4 +28,9 @@ sudo -u "${APP_USER}" -H bash -lc "cd '${BACKEND_DIR}' && npm run build"
 systemctl restart wardrobe-ai.service
 systemctl is-active --quiet wardrobe-ai.service
 
+if [[ -f /etc/nginx/sites-enabled/wardrobe-ai ]]; then
+  nginx -t
+  systemctl reload nginx
+fi
+
 echo "OK"
