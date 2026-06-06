@@ -55,6 +55,9 @@ if [[ -f "${ENV_FILE}" ]]; then
   else
     echo "SEGMENT_PYTHON=${SEGMENT_PY}" >> "${ENV_FILE}"
   fi
+
+  chown "${APP_USER}:${APP_USER}" "${ENV_FILE}"
+  chmod 600 "${ENV_FILE}"
 fi
 
 sudo -u "${APP_USER}" -H bash -lc "cd '${BACKEND_DIR}' && npm ci"
