@@ -725,7 +725,15 @@ async function aiCutoutAddPhotoFromRect() {
       body: { contentType: "image/png", imageBase64: base64 },
     });
 
-    if (!resp.ok) throw new Error(await resp.text());
+    if (!resp.ok) {
+      const t = await resp.text().catch(() => "");
+      let msg = t;
+      try {
+        const j = JSON.parse(t);
+        msg = j?.error?.message ?? t;
+      } catch {}
+      throw new Error(msg || `HTTP ${resp.status}`);
+    }
 
     const out = await resp.json().catch(() => null);
     if (!out || typeof out.imageBase64 !== "string" || !out.imageBase64) throw new Error("Bad segment response");
@@ -748,13 +756,10 @@ async function aiCutoutAddPhotoFromRect() {
     if (els.addPhotoPreview) els.addPhotoPreview.src = url;
     els.addPhotoPreviewWrap?.classList.add("preview--show");
     setText(els.addCutoutStatus, "Готово");
-  } catch {
-    try {
-      await smartCutoutAddPhotoFromRect();
-      setText(els.addCutoutStatus, "Готово");
-    } catch {
-      setText(els.addCutoutStatus, "Не получилось вырезать");
-    }
+  } catch (e) {
+    const msg = e instanceof Error ? e.message : String(e);
+    setText(els.addCutoutStatus, `Не получилось вырезать (сервер): ${String(msg || "").slice(0, 220)}`);
+    return;
   }
 
   const nonce = (state.addDetectNonce += 1);
