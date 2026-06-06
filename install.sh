@@ -21,7 +21,7 @@ fi
 export DEBIAN_FRONTEND=noninteractive
 
 apt-get update -y
-apt-get install -y curl ca-certificates git nginx openssl
+apt-get install -y curl ca-certificates git nginx openssl python3 python3-venv python3-pip
 
 if ! command -v node >/dev/null 2>&1; then
   curl -fsSL https://deb.nodesource.com/setup_20.x | bash -
@@ -48,6 +48,13 @@ if [[ ! -f "${BACKEND_DIR}/package.json" ]]; then
   exit 1
 fi
 
+VENV_DIR="${APP_DIR}/venv"
+SEGMENT_PY="${VENV_DIR}/bin/python"
+if [[ ! -x "${SEGMENT_PY}" ]]; then
+  sudo -u "${APP_USER}" -H bash -lc "python3 -m venv '${VENV_DIR}'"
+  sudo -u "${APP_USER}" -H bash -lc "'${SEGMENT_PY}' -m pip install --upgrade pip && '${SEGMENT_PY}' -m pip install rembg pillow"
+fi
+
 JWT_ACCESS_SECRET="$(openssl rand -hex 32)"
 JWT_REFRESH_SECRET="$(openssl rand -hex 32)"
 ADMIN_PASSWORD="$(openssl rand -base64 18 | tr -d '\n' | tr -d '/' | tr -d '+' | tr -d '=' | cut -c1-16)"
@@ -65,7 +72,11 @@ JWT_ACCESS_SECRET=${JWT_ACCESS_SECRET}
 JWT_REFRESH_SECRET=${JWT_REFRESH_SECRET}
 SEED_ADMIN=1
 ADMIN_PASSWORD=${ADMIN_PASSWORD}
+SEGMENT_PYTHON=${SEGMENT_PY}
 EOF
+fi
+if ! grep -qE '^SEGMENT_PYTHON=' "${ENV_FILE}" 2>/dev/null; then
+  echo "SEGMENT_PYTHON=${SEGMENT_PY}" >> "${ENV_FILE}"
 fi
 chown "${APP_USER}:${APP_USER}" "${ENV_FILE}"
 chmod 600 "${ENV_FILE}"

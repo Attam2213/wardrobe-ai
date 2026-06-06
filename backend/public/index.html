@@ -394,18 +394,14 @@
                     <input class="input" id="addPhotoInput" type="file" accept="image/*" capture="environment" />
                   </label>
                   <div class="muted" id="addAutoColor"></div>
-                  <div class="muted" id="addCropHint">Обведи предмет на фото — я сохраню только его.</div>
+                  <div class="muted" id="addCropHint">Обведи вокруг вещи рамкой — я вырежу её без фона.</div>
                   <div class="preview" id="addPhotoPreviewWrap">
                     <img id="addPhotoPreview" alt="" />
                     <canvas id="addCropCanvas" aria-hidden="true"></canvas>
                   </div>
                   <div class="row" id="addCropActions">
-                    <button class="btn btn--ghost" id="addModeRectBtn" type="button">Рамка</button>
-                    <button class="btn btn--ghost" id="addModeLassoBtn" type="button">Обводка</button>
                     <button class="btn btn--ghost" id="addCropResetBtn" type="button">Сбросить</button>
-                    <button class="btn" id="addCropBtn" type="button">Обрезать</button>
-                    <button class="btn" id="addLassoBtn" type="button">Вырезать</button>
-                    <button class="btn btn--ghost" id="addCutoutBtn" type="button">Умное вырезать</button>
+                    <button class="btn" id="addCutoutBtn" type="button">Вырезать</button>
                   </div>
                   <div class="muted" id="addCutoutStatus"></div>
                   <div class="row">

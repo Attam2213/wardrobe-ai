@@ -36,6 +36,21 @@ if [[ -n "${before}" && -n "${after}" && "${before}" != "${after}" ]]; then
   sudo -u "${APP_USER}" -H bash -lc "cd '${REPO_DIR}' && git log --oneline '${before}..${after}'" || true
 fi
 
+if ! command -v python3 >/dev/null 2>&1; then
+  apt-get update -y
+  apt-get install -y python3 python3-venv python3-pip
+fi
+
+VENV_DIR="${APP_DIR}/venv"
+SEGMENT_PY="${VENV_DIR}/bin/python"
+if [[ ! -x "${SEGMENT_PY}" ]]; then
+  sudo -u "${APP_USER}" -H bash -lc "python3 -m venv '${VENV_DIR}'"
+  sudo -u "${APP_USER}" -H bash -lc "'${SEGMENT_PY}' -m pip install --upgrade pip && '${SEGMENT_PY}' -m pip install rembg pillow"
+fi
+if [[ -f "${ENV_FILE}" ]] && ! grep -qE '^SEGMENT_PYTHON=' "${ENV_FILE}" 2>/dev/null; then
+  echo "SEGMENT_PYTHON=${SEGMENT_PY}" >> "${ENV_FILE}"
+fi
+
 sudo -u "${APP_USER}" -H bash -lc "cd '${BACKEND_DIR}' && npm ci"
 sudo -u "${APP_USER}" -H bash -lc "cd '${BACKEND_DIR}' && npm run prisma:generate"
 sudo -u "${APP_USER}" -H bash -lc "cd '${BACKEND_DIR}' && npx prisma db push"
