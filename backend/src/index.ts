@@ -71,6 +71,14 @@ app.get("/app", (req, res) => {
   res.redirect(302, "/app/");
 });
 
+app.get("/style.css", (req, res) => {
+  res.redirect(302, "/app/style.css");
+});
+
+app.get("/app.js", (req, res) => {
+  res.redirect(302, "/app/app.js");
+});
+
 app.get("/", (req, res) => {
   res.redirect(302, "/app/");
 });
