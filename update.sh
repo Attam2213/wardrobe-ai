@@ -4,6 +4,7 @@ set -euo pipefail
 APP_DIR="${APP_DIR:-/opt/wardrobe-ai}"
 BRANCH="${BRANCH:-main}"
 APP_USER="${APP_USER:-wardrobeai}"
+DOMAIN="${DOMAIN:-_}"
 
 if [[ "$(id -u)" -ne 0 ]]; then
   echo "Run as root"
@@ -28,9 +29,36 @@ sudo -u "${APP_USER}" -H bash -lc "cd '${BACKEND_DIR}' && npm run build"
 systemctl restart wardrobe-ai.service
 systemctl is-active --quiet wardrobe-ai.service
 
-if [[ -f /etc/nginx/sites-enabled/wardrobe-ai ]]; then
-  nginx -t
-  systemctl reload nginx
+APP_PORT="3000"
+if [[ -f "${ENV_FILE}" ]]; then
+  PORT_LINE="$(grep -E '^PORT=' "${ENV_FILE}" | head -n 1 || true)"
+  if [[ -n "${PORT_LINE}" ]]; then
+    APP_PORT="${PORT_LINE#PORT=}"
+  fi
 fi
+
+NGINX_SITE="/etc/nginx/sites-available/wardrobe-ai"
+cat > "${NGINX_SITE}" <<EOF
+server {
+  listen 80 default_server;
+  server_name ${DOMAIN} _;
+
+  client_max_body_size 12m;
+
+  location / {
+    proxy_pass http://127.0.0.1:${APP_PORT};
+    proxy_http_version 1.1;
+    proxy_set_header Host \$host;
+    proxy_set_header X-Real-IP \$remote_addr;
+    proxy_set_header X-Forwarded-For \$proxy_add_x_forwarded_for;
+    proxy_set_header X-Forwarded-Proto \$scheme;
+  }
+}
+EOF
+
+ln -sf "${NGINX_SITE}" /etc/nginx/sites-enabled/wardrobe-ai
+rm -f /etc/nginx/sites-enabled/default || true
+nginx -t
+systemctl reload nginx
 
 echo "OK"
