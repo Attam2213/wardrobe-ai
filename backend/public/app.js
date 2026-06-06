@@ -616,10 +616,12 @@ function redrawAddCropOverlay() {
   const nr = normalizeRect(state.addCropRect);
   if (!nr || nr.w < 6 || nr.h < 6) {
     if (els.addCropBtn) els.addCropBtn.disabled = true;
+    if (els.addCutoutBtn) els.addCutoutBtn.disabled = true;
     return;
   }
 
   if (els.addCropBtn) els.addCropBtn.disabled = false;
+  if (els.addCutoutBtn) els.addCutoutBtn.disabled = false;
   ctx.fillStyle = "rgba(0,0,0,0.35)";
   ctx.fillRect(0, 0, canvas.width, canvas.height);
   ctx.clearRect(nr.x, nr.y, nr.w, nr.h);
@@ -643,13 +645,271 @@ function resetAddCropSelection() {
 function setAddSelectMode(mode) {
   state.addSelectMode = mode === "rect" ? "rect" : "lasso";
   if (state.addSelectMode === "rect") {
-    setText(els.addCropHint, "Выдели предмет рамкой — я сохраню только его.");
+    setText(els.addCropHint, "Обведи вокруг вещи рамкой — нажми «Умное вырезать», и я уберу фон.");
   } else {
-    setText(els.addCropHint, "Обведи предмет на фото — я вырежу его без фона.");
+    setText(els.addCropHint, "Примерно обведи предмет (как в Samsung/Gemini) — нажми «Вырезать», и я сохраню без фона.");
   }
   if (els.addModeRectBtn) els.addModeRectBtn.classList.toggle("tab--active", state.addSelectMode === "rect");
   if (els.addModeLassoBtn) els.addModeLassoBtn.classList.toggle("tab--active", state.addSelectMode === "lasso");
   redrawAddCropOverlay();
+}
+
+async function smartCutoutAddPhotoFromRect() {
+  const file = state.addPhotoFile;
+  const img = els.addPhotoPreview;
+  const canvas = els.addCropCanvas;
+  if (!file || !img || !canvas) return;
+
+  const nr = normalizeRect(state.addCropRect);
+  if (!nr || nr.w < 12 || nr.h < 12) return;
+
+  const iw = img.naturalWidth || 0;
+  const ih = img.naturalHeight || 0;
+  if (!iw || !ih) return;
+
+  const sx = nr.x * (iw / canvas.width);
+  const sy = nr.y * (ih / canvas.height);
+  const sw = nr.w * (iw / canvas.width);
+  const sh = nr.h * (ih / canvas.height);
+
+  const outW = Math.max(1, Math.round(sw));
+  const outH = Math.max(1, Math.round(sh));
+
+  const procMax = 320;
+  const procScale = Math.min(procMax / outW, procMax / outH, 1);
+  const pw = Math.max(1, Math.round(outW * procScale));
+  const ph = Math.max(1, Math.round(outH * procScale));
+
+  const proc = document.createElement("canvas");
+  proc.width = pw;
+  proc.height = ph;
+  const pctx = proc.getContext("2d", { willReadFrequently: true });
+  if (!pctx) return;
+  pctx.drawImage(img, sx, sy, sw, sh, 0, 0, pw, ph);
+
+  const imgData = pctx.getImageData(0, 0, pw, ph);
+  const d = imgData.data;
+
+  const margin = Math.max(2, Math.round(Math.min(pw, ph) * 0.07));
+  const samples = [];
+  for (let x = 0; x < pw; x += 2) {
+    for (let y = 0; y < margin; y += 2) samples.push((y * pw + x) * 4);
+    for (let y = ph - margin; y < ph; y += 2) samples.push((y * pw + x) * 4);
+  }
+  for (let y = 0; y < ph; y += 2) {
+    for (let x = 0; x < margin; x += 2) samples.push((y * pw + x) * 4);
+    for (let x = pw - margin; x < pw; x += 2) samples.push((y * pw + x) * 4);
+  }
+
+  let rSum = 0;
+  let gSum = 0;
+  let bSum = 0;
+  let count = 0;
+  for (const idx of samples) {
+    const a = d[idx + 3];
+    if (a < 40) continue;
+    rSum += d[idx + 0];
+    gSum += d[idx + 1];
+    bSum += d[idx + 2];
+    count += 1;
+  }
+  if (count < 20) return;
+  const br = rSum / count;
+  const bg = gSum / count;
+  const bb = bSum / count;
+
+  const dists = [];
+  for (const idx of samples) {
+    const a = d[idx + 3];
+    if (a < 40) continue;
+    const r = d[idx + 0];
+    const g = d[idx + 1];
+    const b = d[idx + 2];
+    dists.push(Math.abs(r - br) + Math.abs(g - bg) + Math.abs(b - bb));
+  }
+  dists.sort((a, b) => a - b);
+  const median = dists.length ? dists[(dists.length / 2) | 0] : 18;
+  const threshold = Math.max(28, Math.round(median * 2.0));
+
+  const fg = new Uint8Array(pw * ph);
+  for (let y = 0; y < ph; y++) {
+    for (let x = 0; x < pw; x++) {
+      const idx = (y * pw + x) * 4;
+      const a = d[idx + 3];
+      if (a < 40) continue;
+      const r = d[idx + 0];
+      const g = d[idx + 1];
+      const b = d[idx + 2];
+      const dist = Math.abs(r - br) + Math.abs(g - bg) + Math.abs(b - bb);
+      if (dist > threshold) fg[y * pw + x] = 1;
+    }
+  }
+
+  const visited = new Uint8Array(pw * ph);
+  const keep = new Uint8Array(pw * ph);
+  const qx = new Int32Array(pw * ph);
+  const qy = new Int32Array(pw * ph);
+
+  let bestCount = 0;
+  let bestSeed = -1;
+  for (let i = 0; i < fg.length; i++) {
+    if (!fg[i] || visited[i]) continue;
+    const sx2 = i % pw;
+    const sy2 = (i / pw) | 0;
+    let head = 0;
+    let tail = 0;
+    qx[tail] = sx2;
+    qy[tail] = sy2;
+    tail += 1;
+    visited[i] = 1;
+    let c = 0;
+    while (head < tail) {
+      const x = qx[head];
+      const y = qy[head];
+      head += 1;
+      c += 1;
+      const n1 = x > 0 ? y * pw + (x - 1) : -1;
+      const n2 = x + 1 < pw ? y * pw + (x + 1) : -1;
+      const n3 = y > 0 ? (y - 1) * pw + x : -1;
+      const n4 = y + 1 < ph ? (y + 1) * pw + x : -1;
+      if (n1 >= 0 && fg[n1] && !visited[n1]) {
+        visited[n1] = 1;
+        qx[tail] = x - 1;
+        qy[tail] = y;
+        tail += 1;
+      }
+      if (n2 >= 0 && fg[n2] && !visited[n2]) {
+        visited[n2] = 1;
+        qx[tail] = x + 1;
+        qy[tail] = y;
+        tail += 1;
+      }
+      if (n3 >= 0 && fg[n3] && !visited[n3]) {
+        visited[n3] = 1;
+        qx[tail] = x;
+        qy[tail] = y - 1;
+        tail += 1;
+      }
+      if (n4 >= 0 && fg[n4] && !visited[n4]) {
+        visited[n4] = 1;
+        qx[tail] = x;
+        qy[tail] = y + 1;
+        tail += 1;
+      }
+    }
+    if (c > bestCount) {
+      bestCount = c;
+      bestSeed = i;
+    }
+  }
+
+  if (bestSeed < 0 || bestCount < 60) return;
+
+  visited.fill(0);
+  {
+    const sx2 = bestSeed % pw;
+    const sy2 = (bestSeed / pw) | 0;
+    let head = 0;
+    let tail = 0;
+    qx[tail] = sx2;
+    qy[tail] = sy2;
+    tail += 1;
+    visited[bestSeed] = 1;
+    keep[bestSeed] = 1;
+    while (head < tail) {
+      const x = qx[head];
+      const y = qy[head];
+      head += 1;
+      const n1 = x > 0 ? y * pw + (x - 1) : -1;
+      const n2 = x + 1 < pw ? y * pw + (x + 1) : -1;
+      const n3 = y > 0 ? (y - 1) * pw + x : -1;
+      const n4 = y + 1 < ph ? (y + 1) * pw + x : -1;
+      if (n1 >= 0 && fg[n1] && !visited[n1]) {
+        visited[n1] = 1;
+        keep[n1] = 1;
+        qx[tail] = x - 1;
+        qy[tail] = y;
+        tail += 1;
+      }
+      if (n2 >= 0 && fg[n2] && !visited[n2]) {
+        visited[n2] = 1;
+        keep[n2] = 1;
+        qx[tail] = x + 1;
+        qy[tail] = y;
+        tail += 1;
+      }
+      if (n3 >= 0 && fg[n3] && !visited[n3]) {
+        visited[n3] = 1;
+        keep[n3] = 1;
+        qx[tail] = x;
+        qy[tail] = y - 1;
+        tail += 1;
+      }
+      if (n4 >= 0 && fg[n4] && !visited[n4]) {
+        visited[n4] = 1;
+        keep[n4] = 1;
+        qx[tail] = x;
+        qy[tail] = y + 1;
+        tail += 1;
+      }
+    }
+  }
+
+  const mask = document.createElement("canvas");
+  mask.width = pw;
+  mask.height = ph;
+  const mctx = mask.getContext("2d");
+  if (!mctx) return;
+  const maskData = mctx.createImageData(pw, ph);
+  const md = maskData.data;
+  for (let i = 0; i < keep.length; i++) {
+    const a = keep[i] ? 255 : 0;
+    const j = i * 4;
+    md[j + 3] = a;
+  }
+  mctx.putImageData(maskData, 0, 0);
+
+  const out = document.createElement("canvas");
+  out.width = outW;
+  out.height = outH;
+  const octx = out.getContext("2d");
+  if (!octx) return;
+  octx.drawImage(img, sx, sy, sw, sh, 0, 0, outW, outH);
+  octx.globalCompositeOperation = "destination-in";
+  octx.imageSmoothingEnabled = true;
+  octx.drawImage(mask, 0, 0, outW, outH);
+  octx.globalCompositeOperation = "source-over";
+
+  const blob = await new Promise((resolve) => out.toBlob(resolve, "image/png"));
+  if (!blob) return;
+  const cut = new File([blob], (file.name || "photo").replace(/\.[a-z0-9]+$/i, "") + ".png", { type: "image/png" });
+  state.addPhotoFile = cut;
+
+  resetAddCropSelection();
+  setAddSelectMode("rect");
+
+  const url = URL.createObjectURL(cut);
+  setAddPhotoPreviewUrl(url);
+  if (els.addPhotoPreview) els.addPhotoPreview.src = url;
+  els.addPhotoPreviewWrap?.classList.add("preview--show");
+
+  const nonce = (state.addDetectNonce += 1);
+  setText(els.addAutoColor, "Определяю цвет…");
+  try {
+    const detected = await detectColorFromImageFile(cut);
+    if (state.addDetectNonce !== nonce) return;
+    if (!detected?.ru) {
+      setText(els.addAutoColor, "");
+      return;
+    }
+    const input = els.itemForm?.querySelector('input[name="color"]');
+    const current = String(input?.value ?? "").trim();
+    if (input && !current) input.value = detected.ru;
+    setText(els.addAutoColor, `Цвет на фото: ${detected.ru}`);
+  } catch {
+    if (state.addDetectNonce !== nonce) return;
+    setText(els.addAutoColor, "");
+  }
 }
 
 async function cutoutAddPhotoFromLasso() {
@@ -1721,7 +1981,15 @@ if (els.addCropCanvas) {
 if (els.addCropResetBtn) els.addCropResetBtn.addEventListener("click", resetAddCropSelection);
 if (els.addCropBtn) els.addCropBtn.addEventListener("click", () => cropAddPhotoToSelection().catch(() => {}));
 if (els.addLassoBtn) els.addLassoBtn.addEventListener("click", () => cutoutAddPhotoFromLasso().catch(() => {}));
-if (els.addCutoutBtn) els.addCutoutBtn.addEventListener("click", () => cutoutAddPhoto().catch(() => {}));
+if (els.addCutoutBtn) {
+  els.addCutoutBtn.addEventListener("click", () => {
+    if (state.addSelectMode === "rect") {
+      smartCutoutAddPhotoFromRect().catch(() => {});
+      return;
+    }
+    cutoutAddPhoto().catch(() => {});
+  });
+}
 
 if (els.addModeRectBtn) {
   els.addModeRectBtn.addEventListener("click", () => {
