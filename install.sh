@@ -106,6 +106,12 @@ server {
 
   client_max_body_size 12m;
 
+  location ^~ /app/ {
+    alias ${BACKEND_DIR}/public/;
+    try_files \$uri \$uri/ /app/index.html;
+    add_header Cache-Control "no-cache";
+  }
+
   location / {
     proxy_pass http://127.0.0.1:${APP_PORT};
     proxy_http_version 1.1;
