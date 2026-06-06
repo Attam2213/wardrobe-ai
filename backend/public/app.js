@@ -535,6 +535,139 @@ async function detectColorFromImageFile(file) {
   return { key: bestKey, ru };
 }
 
+async function readJpegOrientation(file) {
+  const slice = file.slice(0, 256 * 1024);
+  const buf = await slice.arrayBuffer();
+  const view = new DataView(buf);
+  if (view.byteLength < 4) return 1;
+  if (view.getUint16(0, false) !== 0xffd8) return 1;
+
+  let offset = 2;
+  while (offset + 4 <= view.byteLength) {
+    if (view.getUint8(offset) !== 0xff) break;
+    const marker = view.getUint8(offset + 1);
+    offset += 2;
+    if (marker === 0xd9 || marker === 0xda) break;
+    const size = view.getUint16(offset, false);
+    if (size < 2) break;
+    const segStart = offset + 2;
+    if (marker === 0xe1 && segStart + 6 <= view.byteLength) {
+      const exif =
+        view.getUint8(segStart + 0) === 0x45 &&
+        view.getUint8(segStart + 1) === 0x78 &&
+        view.getUint8(segStart + 2) === 0x69 &&
+        view.getUint8(segStart + 3) === 0x66 &&
+        view.getUint8(segStart + 4) === 0x00 &&
+        view.getUint8(segStart + 5) === 0x00;
+      if (exif) {
+        const tiff = segStart + 6;
+        if (tiff + 8 > view.byteLength) return 1;
+        const little = view.getUint16(tiff, false) === 0x4949;
+        const get16 = (p) => view.getUint16(p, little);
+        const get32 = (p) => view.getUint32(p, little);
+        const ifd0 = tiff + get32(tiff + 4);
+        if (ifd0 + 2 > view.byteLength) return 1;
+        const entries = get16(ifd0);
+        for (let i = 0; i < entries; i++) {
+          const e = ifd0 + 2 + i * 12;
+          if (e + 12 > view.byteLength) break;
+          const tag = get16(e);
+          if (tag === 0x0112) {
+            const value = get16(e + 8);
+            return value >= 1 && value <= 8 ? value : 1;
+          }
+        }
+        return 1;
+      }
+    }
+    offset += size;
+  }
+  return 1;
+}
+
+async function normalizeImageOrientationFile(file) {
+  if (!file || typeof file.type !== "string") return file;
+  const isJpeg = file.type === "image/jpeg" || file.type === "image/jpg";
+  if (!isJpeg) return file;
+
+  let orientation = 1;
+  try {
+    orientation = await readJpegOrientation(file);
+  } catch {
+    orientation = 1;
+  }
+  if (orientation === 1) return file;
+
+  let bitmap = null;
+  let rawNeedsTransform = true;
+  try {
+    bitmap = await createImageBitmap(file, { imageOrientation: "none" });
+  } catch {
+    bitmap = await createImageBitmap(file, { imageOrientation: "from-image" });
+    rawNeedsTransform = false;
+  }
+  if (!bitmap) return file;
+  if (!rawNeedsTransform) {
+    const out = document.createElement("canvas");
+    const maxSide = 1600;
+    const scale = Math.min(maxSide / bitmap.width, maxSide / bitmap.height, 1);
+    out.width = Math.max(1, Math.round(bitmap.width * scale));
+    out.height = Math.max(1, Math.round(bitmap.height * scale));
+    const ctx = out.getContext("2d");
+    if (!ctx) return file;
+    ctx.drawImage(bitmap, 0, 0, out.width, out.height);
+    const blob = await new Promise((resolve) => out.toBlob(resolve, "image/png"));
+    if (!blob) return file;
+    return new File([blob], (file.name || "photo").replace(/\.[a-z0-9]+$/i, "") + ".png", { type: "image/png" });
+  }
+
+  const w = bitmap.width;
+  const h = bitmap.height;
+  const rotated = orientation >= 5 && orientation <= 8;
+  const maxSide = 1600;
+  const outW0 = rotated ? h : w;
+  const outH0 = rotated ? w : h;
+  const scale = Math.min(maxSide / outW0, maxSide / outH0, 1);
+  const out = document.createElement("canvas");
+  out.width = Math.max(1, Math.round(outW0 * scale));
+  out.height = Math.max(1, Math.round(outH0 * scale));
+  const ctx = out.getContext("2d");
+  if (!ctx) return file;
+  ctx.scale(scale, scale);
+
+  switch (orientation) {
+    case 2:
+      ctx.setTransform(-scale, 0, 0, scale, outW0 * scale, 0);
+      break;
+    case 3:
+      ctx.setTransform(-scale, 0, 0, -scale, outW0 * scale, outH0 * scale);
+      break;
+    case 4:
+      ctx.setTransform(scale, 0, 0, -scale, 0, outH0 * scale);
+      break;
+    case 5:
+      ctx.setTransform(0, scale, scale, 0, 0, 0);
+      break;
+    case 6:
+      ctx.setTransform(0, scale, -scale, 0, outW0 * scale, 0);
+      break;
+    case 7:
+      ctx.setTransform(0, -scale, -scale, 0, outW0 * scale, outH0 * scale);
+      break;
+    case 8:
+      ctx.setTransform(0, -scale, scale, 0, 0, outH0 * scale);
+      break;
+    default:
+      ctx.setTransform(scale, 0, 0, scale, 0, 0);
+      break;
+  }
+
+  ctx.drawImage(bitmap, 0, 0);
+  const blob = await new Promise((resolve) => out.toBlob(resolve, "image/png"));
+  if (!blob) return file;
+  return new File([blob], (file.name || "photo").replace(/\.[a-z0-9]+$/i, "") + ".png", { type: "image/png" });
+}
+
 function clamp(n, min, max) {
   return Math.max(min, Math.min(max, n));
 }
@@ -1797,10 +1930,10 @@ if (els.addBackBtn) els.addBackBtn.addEventListener("click", () => setAddStep("p
 if (els.addPhotoInput) {
   els.addPhotoInput.addEventListener("change", async () => {
     setText(els.addModalError, "");
-    const f = els.addPhotoInput.files?.[0] ?? null;
-    state.addPhotoFile = f;
+    let f = els.addPhotoInput.files?.[0] ?? null;
     const nonce = (state.addDetectNonce += 1);
     if (!f) {
+      state.addPhotoFile = null;
       if (els.addPhotoPreview) els.addPhotoPreview.src = "";
       setAddPhotoPreviewUrl(null);
       els.addPhotoPreviewWrap?.classList.remove("preview--show");
@@ -1810,6 +1943,14 @@ if (els.addPhotoInput) {
       resetAddCropSelection();
       return;
     }
+
+    setText(els.addCutoutStatus, "Подготавливаю фото…");
+    try {
+      f = await normalizeImageOrientationFile(f);
+    } catch {}
+    if (state.addDetectNonce !== nonce) return;
+
+    state.addPhotoFile = f;
     resetAddCropSelection();
     setText(els.addCropHint, "Обведи вокруг вещи рамкой — я вырежу её без фона.");
     setText(els.addCutoutStatus, "");
