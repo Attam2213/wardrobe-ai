@@ -537,40 +537,74 @@ async function detectColorFromImageFile(file) {
 
 async function normalizeImageOrientationFile(file) {
   if (!file || typeof file.type !== "string") return file;
-  const isJpeg = file.type === "image/jpeg" || file.type === "image/jpg";
-  if (!isJpeg) return file;
+  if (!file.type.startsWith("image/")) return file;
 
-  const img = await new Promise((resolve, reject) => {
-    const i = new Image();
-    i.onload = () => resolve(i);
-    i.onerror = () => reject(new Error("Не удалось загрузить изображение."));
-    const url = URL.createObjectURL(file);
-    i.onload = () => {
-      try {
-        URL.revokeObjectURL(url);
-      } catch {}
-      resolve(i);
-    };
-    i.src = url;
-  });
-
-  const iw = Math.max(1, img.naturalWidth || img.width || 1);
-  const ih = Math.max(1, img.naturalHeight || img.height || 1);
   const maxSide = 1600;
-  const scale = Math.min(maxSide / iw, maxSide / ih, 1);
-  const w = Math.max(1, Math.round(iw * scale));
-  const h = Math.max(1, Math.round(ih * scale));
+  const baseName = (file.name || "photo").replace(/\.[a-z0-9]+$/i, "");
 
-  const out = document.createElement("canvas");
-  out.width = w;
-  out.height = h;
-  const ctx = out.getContext("2d");
-  if (!ctx) return file;
-  ctx.drawImage(img, 0, 0, w, h);
+  const url = URL.createObjectURL(file);
+  try {
+    const img = new Image();
+    img.decoding = "async";
+    img.src = url;
+    if (typeof img.decode === "function") await img.decode();
+    else
+      await new Promise((resolve, reject) => {
+        img.onload = resolve;
+        img.onerror = reject;
+      });
 
-  const blob = await new Promise((resolve) => out.toBlob(resolve, "image/png"));
-  if (!blob) return file;
-  return new File([blob], (file.name || "photo").replace(/\.[a-z0-9]+$/i, "") + ".png", { type: "image/png" });
+    const iw = Math.max(1, img.naturalWidth || img.width || 1);
+    const ih = Math.max(1, img.naturalHeight || img.height || 1);
+    const scale = Math.min(maxSide / iw, maxSide / ih, 1);
+    const w = Math.max(1, Math.round(iw * scale));
+    const h = Math.max(1, Math.round(ih * scale));
+
+    const out = document.createElement("canvas");
+    out.width = w;
+    out.height = h;
+    const ctx = out.getContext("2d");
+    if (!ctx) return file;
+    ctx.drawImage(img, 0, 0, w, h);
+
+    const blob = await new Promise((resolve) => out.toBlob(resolve, "image/png"));
+    if (blob) return new File([blob], `${baseName}.png`, { type: "image/png" });
+  } catch {
+    if (typeof createImageBitmap !== "function") return file;
+
+    let bmp;
+    try {
+      bmp = await createImageBitmap(file, { imageOrientation: "from-image" });
+    } catch {
+      bmp = await createImageBitmap(file);
+    }
+
+    const iw = Math.max(1, bmp.width || 1);
+    const ih = Math.max(1, bmp.height || 1);
+    const scale = Math.min(maxSide / iw, maxSide / ih, 1);
+    const w = Math.max(1, Math.round(iw * scale));
+    const h = Math.max(1, Math.round(ih * scale));
+
+    const out = document.createElement("canvas");
+    out.width = w;
+    out.height = h;
+    const ctx = out.getContext("2d");
+    if (!ctx) return file;
+    ctx.drawImage(bmp, 0, 0, w, h);
+
+    if (typeof bmp.close === "function") {
+      try {
+        bmp.close();
+      } catch {}
+    }
+
+    const blob = await new Promise((resolve) => out.toBlob(resolve, "image/png"));
+    if (blob) return new File([blob], `${baseName}.png`, { type: "image/png" });
+  } finally {
+    URL.revokeObjectURL(url);
+  }
+
+  return file;
 }
 
 function clamp(n, min, max) {
@@ -686,14 +720,25 @@ async function aiCutoutAddPhotoFromRect() {
   });
 
   try {
-    const out = await apiFetch("/api/wardrobe/segment", {
+    const resp = await apiFetch("/api/wardrobe/segment", {
       method: "POST",
       body: { contentType: "image/png", imageBase64: base64 },
     });
 
-    const b = await (await fetch(`data:${out.contentType};base64,${out.imageBase64}`)).blob();
+    if (!resp.ok) throw new Error(await resp.text());
+
+    const out = await resp.json().catch(() => null);
+    if (!out || typeof out.imageBase64 !== "string" || !out.imageBase64) throw new Error("Bad segment response");
+
+    const contentType = typeof out.contentType === "string" && out.contentType ? out.contentType : "image/png";
+    const dataUrl = out.imageBase64.startsWith("data:")
+      ? out.imageBase64
+      : `data:${contentType};base64,${out.imageBase64}`;
+
+    const b = await (await fetch(dataUrl)).blob();
+    if (!b || !b.size) throw new Error("Empty segment result");
     const cut = new File([b], (file.name || "photo").replace(/\.[a-z0-9]+$/i, "") + ".png", {
-      type: out.contentType || "image/png",
+      type: contentType,
     });
     state.addPhotoFile = cut;
 
