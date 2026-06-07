@@ -244,11 +244,27 @@ h3 {
 }
 
 @media (max-width: 420px) {
+  .row--space {
+    flex-wrap: wrap;
+  }
+
+  .row--space .btn {
+    padding: 10px 10px;
+  }
+
+  .row--space .btn span {
+    display: none;
+  }
+
   .nav {
     gap: 6px;
     padding: 8px;
+    overflow-x: auto;
+    justify-content: flex-start;
+    -webkit-overflow-scrolling: touch;
   }
   .nav__btn {
+    flex: 0 0 64px;
     padding: 10px 0;
     font-size: 11px;
     gap: 0;
