@@ -422,11 +422,21 @@ h3 {
   touch-action: none;
 }
 
+.avatar__layer--active {
+  outline: 2px solid rgba(124, 58, 237, 0.55);
+  outline-offset: 6px;
+}
+
 .avatar__hint {
   color: var(--muted);
   font-size: 12px;
   position: relative;
   z-index: 1;
+}
+
+#avatarControls {
+  margin-top: 10px;
+  flex-wrap: wrap;
 }
 
 .avatar__base {

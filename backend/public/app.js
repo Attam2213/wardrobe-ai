@@ -83,6 +83,9 @@ const els = {
   avatarWear: document.getElementById("avatarWear"),
   avatarItems: document.getElementById("avatarItems"),
   avatarClearBtn: document.getElementById("avatarClearBtn"),
+  avatarRotateLeftBtn: document.getElementById("avatarRotateLeftBtn"),
+  avatarRotateRightBtn: document.getElementById("avatarRotateRightBtn"),
+  avatarResetLayerBtn: document.getElementById("avatarResetLayerBtn"),
 
   profileOut: document.getElementById("profileOut"),
   profileError: document.getElementById("profileError"),
@@ -114,6 +117,7 @@ const state = {
   avatarSelectedIds: new Set(),
   avatarLayerTransforms: Object.create(null),
   avatarZ: 1,
+  avatarActiveId: null,
   addPhotoFile: null,
   addLastType: null,
   addLastColor: null,
@@ -1789,17 +1793,33 @@ function getAvatarTransform(itemId) {
   const x = Number.isFinite(t?.x) ? t.x : 0;
   const y = Number.isFinite(t?.y) ? t.y : 0;
   const s = Number.isFinite(t?.s) ? t.s : 1;
-  return { x, y, s };
+  const r = Number.isFinite(t?.r) ? t.r : 0;
+  return { x, y, s, r };
 }
 
 function saveAvatarTransform(itemId, t) {
   const next = { ...(state.avatarLayerTransforms || Object.create(null)) };
-  next[itemId] = { x: t.x, y: t.y, s: t.s };
+  next[itemId] = { x: t.x, y: t.y, s: t.s, r: t.r ?? 0 };
   setAvatarLayerTransforms(next);
 }
 
 function applyAvatarLayerTransform(el, t) {
-  el.style.transform = `translate(-50%, -50%) translate(${t.x}px, ${t.y}px) scale(${t.s})`;
+  el.style.transform = `translate(-50%, -50%) translate(${t.x}px, ${t.y}px) rotate(${t.r || 0}deg) scale(${t.s})`;
+}
+
+function defaultAvatarTransformForItem(item) {
+  const type = String(item?.type || "").toLowerCase();
+  if (type === "shirt") return { x: 0, y: -40, s: 1.05, r: 0 };
+  if (type === "jacket") return { x: 0, y: -30, s: 1.1, r: 0 };
+  if (type === "pants") return { x: 0, y: 90, s: 1.1, r: 0 };
+  if (type === "shoes") return { x: 0, y: 160, s: 0.9, r: 0 };
+  if (type === "accessories") return { x: 0, y: -120, s: 0.75, r: 0 };
+  return { x: 0, y: 0, s: 1, r: 0 };
+}
+
+function setAvatarActive(itemId) {
+  state.avatarActiveId = itemId || null;
+  renderAvatar().catch(() => {});
 }
 
 function bindAvatarLayerGestures(el, itemId) {
@@ -1815,6 +1835,7 @@ function bindAvatarLayerGestures(el, itemId) {
       e.preventDefault();
       e.stopPropagation();
     } catch {}
+    setAvatarActive(itemId);
     el.setPointerCapture(e.pointerId);
     pointers.set(e.pointerId, getEventXY(e));
     el.style.zIndex = String((state.avatarZ += 1));
@@ -1900,6 +1921,7 @@ async function renderAvatar() {
       if (state.avatarSelectedIds.has(item.id)) state.avatarSelectedIds.delete(item.id);
       else state.avatarSelectedIds.add(item.id);
       setAvatarSelection(Array.from(state.avatarSelectedIds));
+      if (state.avatarSelectedIds.has(item.id)) setAvatarActive(item.id);
       renderAvatar().catch(() => {});
     });
     b.addEventListener("dragstart", (e) => {
@@ -1929,8 +1951,13 @@ async function renderAvatar() {
     img.draggable = false;
     img.src = src;
     img.dataset.itemId = item.id;
-    const t = getAvatarTransform(item.id);
+    let t = getAvatarTransform(item.id);
+    if (!state.avatarLayerTransforms?.[item.id]) {
+      t = defaultAvatarTransformForItem(item);
+      saveAvatarTransform(item.id, t);
+    }
     applyAvatarLayerTransform(img, t);
+    img.classList.toggle("avatar__layer--active", state.avatarActiveId === item.id);
     bindAvatarLayerGestures(img, item.id);
     layers.appendChild(img);
   }
@@ -2303,6 +2330,40 @@ if (els.avatarStage) {
 if (els.avatarClearBtn) {
   els.avatarClearBtn.addEventListener("click", () => {
     setAvatarSelection([]);
+    setAvatarActive(null);
+    renderAvatar().catch(() => {});
+  });
+}
+
+if (els.avatarRotateLeftBtn) {
+  els.avatarRotateLeftBtn.addEventListener("click", () => {
+    const id = state.avatarActiveId;
+    if (!id) return;
+    const t = getAvatarTransform(id);
+    const next = { ...t, r: (t.r || 0) - 90 };
+    saveAvatarTransform(id, next);
+    renderAvatar().catch(() => {});
+  });
+}
+
+if (els.avatarRotateRightBtn) {
+  els.avatarRotateRightBtn.addEventListener("click", () => {
+    const id = state.avatarActiveId;
+    if (!id) return;
+    const t = getAvatarTransform(id);
+    const next = { ...t, r: (t.r || 0) + 90 };
+    saveAvatarTransform(id, next);
+    renderAvatar().catch(() => {});
+  });
+}
+
+if (els.avatarResetLayerBtn) {
+  els.avatarResetLayerBtn.addEventListener("click", () => {
+    const id = state.avatarActiveId;
+    if (!id) return;
+    const item = (state.wardrobeItems || []).find((x) => x.id === id);
+    const t = item ? defaultAvatarTransformForItem(item) : { x: 0, y: 0, s: 1, r: 0 };
+    saveAvatarTransform(id, t);
     renderAvatar().catch(() => {});
   });
 }

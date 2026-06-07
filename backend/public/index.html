@@ -4,7 +4,7 @@
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <title>Wardrobe AI</title>
-    <link rel="stylesheet" href="/app/style.css?v=10" />
+    <link rel="stylesheet" href="/app/style.css?v=11" />
   </head>
   <body>
     <div class="app">
@@ -190,6 +190,11 @@
                   <div class="avatar__layers" id="avatarLayers" aria-hidden="true"></div>
                   <div class="avatar__hint">Тапни по вещи, чтобы надеть. На аватаре: тащи чтобы двигать, двумя пальцами — масштаб.</div>
                   <div class="avatar__wear" id="avatarWear"></div>
+                </div>
+                <div class="row" id="avatarControls">
+                  <button class="btn btn--ghost" id="avatarRotateLeftBtn" type="button">Повернуть ⟲</button>
+                  <button class="btn btn--ghost" id="avatarRotateRightBtn" type="button">Повернуть ⟳</button>
+                  <button class="btn btn--ghost" id="avatarResetLayerBtn" type="button">Сброс</button>
                 </div>
                 <div class="muted">Тут 2D-примерка. Лучше всего работают фото вещей с вырезанным фоном.</div>
               </div>
@@ -518,6 +523,6 @@
       </main>
     </div>
 
-    <script type="module" src="/app/app.js?v=10"></script>
+    <script type="module" src="/app/app.js?v=11"></script>
   </body>
 </html>
