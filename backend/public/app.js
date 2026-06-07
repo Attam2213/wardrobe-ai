@@ -1811,6 +1811,10 @@ function bindAvatarLayerGestures(el, itemId) {
 
   const onDown = (e) => {
     if (!(e instanceof PointerEvent)) return;
+    try {
+      e.preventDefault();
+      e.stopPropagation();
+    } catch {}
     el.setPointerCapture(e.pointerId);
     pointers.set(e.pointerId, getEventXY(e));
     el.style.zIndex = String((state.avatarZ += 1));
@@ -1831,6 +1835,10 @@ function bindAvatarLayerGestures(el, itemId) {
   const onMove = (e) => {
     if (!(e instanceof PointerEvent)) return;
     if (!pointers.has(e.pointerId)) return;
+    try {
+      e.preventDefault();
+      e.stopPropagation();
+    } catch {}
     pointers.set(e.pointerId, getEventXY(e));
 
     const t = getAvatarTransform(itemId);
