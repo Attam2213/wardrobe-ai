@@ -186,10 +186,12 @@
               <div class="card card--inner">
                 <h3>Аватар</h3>
                 <div class="avatar" id="avatarStage">
-                  <div class="avatar__hint">Перетащи вещи на аватар</div>
+                  <div class="avatar__base" aria-hidden="true"></div>
+                  <div class="avatar__layers" id="avatarLayers" aria-hidden="true"></div>
+                  <div class="avatar__hint">Тапни по вещи, чтобы надеть. На аватаре: тащи чтобы двигать, двумя пальцами — масштаб.</div>
                   <div class="avatar__wear" id="avatarWear"></div>
                 </div>
-                <div class="muted">Тут пока 2D-примерка (просто выбранные вещи). 3D добавим позже.</div>
+                <div class="muted">Тут 2D-примерка. Лучше всего работают фото вещей с вырезанным фоном.</div>
               </div>
 
               <div class="card card--inner">

@@ -302,6 +302,11 @@ h3 {
   font-size: 12px;
 }
 
+.chip--active {
+  border-color: rgba(124, 58, 237, 0.45);
+  background: rgba(124, 58, 237, 0.12);
+}
+
 .modal {
   position: fixed;
   inset: 0;
@@ -407,16 +412,56 @@ h3 {
   border: 1px dashed rgba(124, 58, 237, 0.5);
   border-radius: 18px;
   padding: 18px;
-  min-height: 220px;
+  min-height: 420px;
   background: rgba(124, 58, 237, 0.06);
   display: flex;
   flex-direction: column;
   gap: 10px;
+  position: relative;
+  overflow: hidden;
 }
 
 .avatar__hint {
   color: var(--muted);
   font-size: 12px;
+}
+
+.avatar__base {
+  position: absolute;
+  left: 50%;
+  top: 18px;
+  transform: translateX(-50%);
+  width: min(320px, 85%);
+  height: calc(100% - 36px);
+  opacity: 0.22;
+  pointer-events: none;
+  background:
+    radial-gradient(circle at 50% 16%, rgba(15, 23, 42, 0.9) 0 18%, transparent 19% 100%),
+    radial-gradient(closest-side at 50% 42%, rgba(15, 23, 42, 0.9) 0 52%, transparent 53% 100%),
+    radial-gradient(closest-side at 22% 44%, rgba(15, 23, 42, 0.9) 0 18%, transparent 19% 100%),
+    radial-gradient(closest-side at 78% 44%, rgba(15, 23, 42, 0.9) 0 18%, transparent 19% 100%),
+    radial-gradient(closest-side at 42% 86%, rgba(15, 23, 42, 0.9) 0 22%, transparent 23% 100%),
+    radial-gradient(closest-side at 58% 86%, rgba(15, 23, 42, 0.9) 0 22%, transparent 23% 100%);
+  filter: blur(0.5px);
+}
+
+.avatar__layers {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+}
+
+.avatar__layer {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  width: min(340px, 88%);
+  height: auto;
+  transform-origin: 50% 50%;
+  user-select: none;
+  touch-action: none;
+  pointer-events: auto;
+  filter: drop-shadow(0 10px 18px rgba(15, 23, 42, 0.18));
 }
 
 .avatar__wear {

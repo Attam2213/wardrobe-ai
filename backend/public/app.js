@@ -79,6 +79,7 @@ const els = {
   shoppingList: document.getElementById("shoppingList"),
 
   avatarStage: document.getElementById("avatarStage"),
+  avatarLayers: document.getElementById("avatarLayers"),
   avatarWear: document.getElementById("avatarWear"),
   avatarItems: document.getElementById("avatarItems"),
   avatarClearBtn: document.getElementById("avatarClearBtn"),
@@ -111,6 +112,8 @@ const state = {
   lastSuggestion: null,
   lastSuggestionOutfitId: null,
   avatarSelectedIds: new Set(),
+  avatarLayerTransforms: Object.create(null),
+  avatarZ: 1,
   addPhotoFile: null,
   addLastType: null,
   addLastColor: null,
@@ -1754,6 +1757,23 @@ function setAvatarSelection(ids) {
   localStorage.setItem("avatarSelectedIds", JSON.stringify(Array.from(state.avatarSelectedIds)));
 }
 
+function setAvatarLayerTransforms(next) {
+  state.avatarLayerTransforms = next && typeof next === "object" ? next : Object.create(null);
+  localStorage.setItem("avatarLayerTransforms", JSON.stringify(state.avatarLayerTransforms));
+}
+
+function restoreAvatarLayerTransforms() {
+  try {
+    const raw = localStorage.getItem("avatarLayerTransforms");
+    const obj = raw ? JSON.parse(raw) : null;
+    if (obj && typeof obj === "object") {
+      setAvatarLayerTransforms(obj);
+      return;
+    }
+  } catch {}
+  setAvatarLayerTransforms(Object.create(null));
+}
+
 function restoreAvatarSelection() {
   try {
     const raw = localStorage.getItem("avatarSelectedIds");
@@ -1764,10 +1784,95 @@ function restoreAvatarSelection() {
   }
 }
 
+function getAvatarTransform(itemId) {
+  const t = state.avatarLayerTransforms?.[itemId];
+  const x = Number.isFinite(t?.x) ? t.x : 0;
+  const y = Number.isFinite(t?.y) ? t.y : 0;
+  const s = Number.isFinite(t?.s) ? t.s : 1;
+  return { x, y, s };
+}
+
+function saveAvatarTransform(itemId, t) {
+  const next = { ...(state.avatarLayerTransforms || Object.create(null)) };
+  next[itemId] = { x: t.x, y: t.y, s: t.s };
+  setAvatarLayerTransforms(next);
+}
+
+function applyAvatarLayerTransform(el, t) {
+  el.style.transform = `translate(-50%, -50%) translate(${t.x}px, ${t.y}px) scale(${t.s})`;
+}
+
+function bindAvatarLayerGestures(el, itemId) {
+  const pointers = new Map();
+  let drag = null;
+  let pinch = null;
+
+  const getEventXY = (e) => ({ x: e.clientX, y: e.clientY });
+
+  const onDown = (e) => {
+    if (!(e instanceof PointerEvent)) return;
+    el.setPointerCapture(e.pointerId);
+    pointers.set(e.pointerId, getEventXY(e));
+    el.style.zIndex = String((state.avatarZ += 1));
+
+    const t = getAvatarTransform(itemId);
+    if (pointers.size === 1) {
+      drag = { id: e.pointerId, x0: e.clientX, y0: e.clientY, tx: t.x, ty: t.y };
+      pinch = null;
+    } else if (pointers.size === 2) {
+      const arr = Array.from(pointers.values());
+      const dx = arr[0].x - arr[1].x;
+      const dy = arr[0].y - arr[1].y;
+      pinch = { dist0: Math.max(1, Math.hypot(dx, dy)), s0: t.s };
+      drag = null;
+    }
+  };
+
+  const onMove = (e) => {
+    if (!(e instanceof PointerEvent)) return;
+    if (!pointers.has(e.pointerId)) return;
+    pointers.set(e.pointerId, getEventXY(e));
+
+    const t = getAvatarTransform(itemId);
+    if (pinch && pointers.size >= 2) {
+      const arr = Array.from(pointers.values()).slice(0, 2);
+      const dx = arr[0].x - arr[1].x;
+      const dy = arr[0].y - arr[1].y;
+      const dist = Math.max(1, Math.hypot(dx, dy));
+      const ns = clamp(pinch.s0 * (dist / pinch.dist0), 0.25, 3.5);
+      const next = { x: t.x, y: t.y, s: ns };
+      applyAvatarLayerTransform(el, next);
+      saveAvatarTransform(itemId, next);
+      return;
+    }
+
+    if (drag && drag.id === e.pointerId) {
+      const dx = e.clientX - drag.x0;
+      const dy = e.clientY - drag.y0;
+      const next = { x: drag.tx + dx, y: drag.ty + dy, s: t.s };
+      applyAvatarLayerTransform(el, next);
+      saveAvatarTransform(itemId, next);
+    }
+  };
+
+  const onUp = (e) => {
+    if (!(e instanceof PointerEvent)) return;
+    pointers.delete(e.pointerId);
+    if (drag && drag.id === e.pointerId) drag = null;
+    if (pointers.size < 2) pinch = null;
+  };
+
+  el.addEventListener("pointerdown", onDown);
+  el.addEventListener("pointermove", onMove);
+  el.addEventListener("pointerup", onUp);
+  el.addEventListener("pointercancel", onUp);
+}
+
 async function renderAvatar() {
-  if (!els.avatarItems || !els.avatarWear) return;
+  if (!els.avatarItems || !els.avatarWear || !els.avatarStage) return;
   els.avatarItems.innerHTML = "";
   els.avatarWear.innerHTML = "";
+  if (els.avatarLayers) els.avatarLayers.innerHTML = "";
 
   if (!Array.isArray(state.wardrobeItems) || state.wardrobeItems.length === 0) {
     try {
@@ -1779,7 +1884,7 @@ async function renderAvatar() {
   for (const item of items) {
     const b = document.createElement("button");
     b.type = "button";
-    b.className = "chip";
+    b.className = state.avatarSelectedIds.has(item.id) ? "chip chip--active" : "chip";
     b.draggable = true;
     b.textContent = item.name;
     b.dataset.itemId = item.id;
@@ -1804,11 +1909,41 @@ async function renderAvatar() {
     return;
   }
 
+  const layers = els.avatarLayers ?? els.avatarStage;
+  let anyImage = false;
+  for (const item of selected) {
+    const src = String(item.photoUrl || "").trim();
+    if (!src) continue;
+    anyImage = true;
+    const img = document.createElement("img");
+    img.className = "avatar__layer";
+    img.alt = item.name || "";
+    img.draggable = false;
+    img.src = src;
+    img.dataset.itemId = item.id;
+    const t = getAvatarTransform(item.id);
+    applyAvatarLayerTransform(img, t);
+    bindAvatarLayerGestures(img, item.id);
+    layers.appendChild(img);
+  }
+
   for (const item of selected) {
     const w = document.createElement("div");
     w.className = "wear";
     w.textContent = `${item.name} (${item.type}${item.color ? `, ${item.color}` : ""})`;
+    w.addEventListener("click", () => {
+      state.avatarSelectedIds.delete(item.id);
+      setAvatarSelection(Array.from(state.avatarSelectedIds));
+      renderAvatar().catch(() => {});
+    });
     els.avatarWear.appendChild(w);
+  }
+
+  if (!anyImage) {
+    const hint = document.createElement("div");
+    hint.className = "muted";
+    hint.textContent = "У выбранных вещей нет фото. Сначала добавь фото (лучше — вырезанное без фона).";
+    els.avatarWear.appendChild(hint);
   }
 }
 
@@ -1835,6 +1970,7 @@ async function enterApp() {
   if (!ok) return;
 
   restoreAvatarSelection();
+  restoreAvatarLayerTransforms();
   await renderTopbar();
   setScreen("home");
   await renderWardrobe();
