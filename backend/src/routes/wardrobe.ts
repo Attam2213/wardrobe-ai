@@ -40,6 +40,22 @@ const SegmentSchema = z.object({
 export function wardrobeRouter(params: { prisma: PrismaClient; minio: MinioConfig }) {
   const router = Router();
   const minioClient = createMinioClient(params.minio);
+  const segmentMaxConcurrency = Math.max(1, Number(process.env.SEGMENT_MAX_CONCURRENCY || 1));
+  const segmentTimeoutMs = Math.max(5_000, Number(process.env.SEGMENT_TIMEOUT_MS || 90_000));
+  let segmentInFlight = 0;
+
+  async function resolvePhotoUrl(photoUrl: string | null): Promise<string | null> {
+    const raw = String(photoUrl || "").trim();
+    if (!raw) return null;
+    if (!raw.startsWith("minio:")) return raw;
+    const objectKey = raw.slice("minio:".length);
+    if (!objectKey) return null;
+    try {
+      return await minioClient.presignedGetObject(params.minio.bucket, objectKey, 60 * 60);
+    } catch {
+      return null;
+    }
+  }
 
   router.get("/", async (req, res) => {
     const userId = req.userId;
@@ -57,7 +73,13 @@ export function wardrobeRouter(params: { prisma: PrismaClient; minio: MinioConfi
       dbDown(res);
       return;
     }
-    res.status(200).json({ items });
+    const outItems = await Promise.all(
+      items.map(async (i) => ({
+        ...i,
+        photoUrl: await resolvePhotoUrl(i.photoUrl),
+      })),
+    );
+    res.status(200).json({ items: outItems });
   });
 
   router.post("/", async (req, res) => {
@@ -211,7 +233,7 @@ export function wardrobeRouter(params: { prisma: PrismaClient; minio: MinioConfi
         try {
           item = await params.prisma.wardrobeItem.update({
             where: { id: body.data.itemId },
-            data: { photoUrl: uploaded.presignedUrl },
+            data: { photoUrl: `minio:${uploaded.objectKey}` },
           });
         } catch {
           dbDown(res);
@@ -310,6 +332,12 @@ export function wardrobeRouter(params: { prisma: PrismaClient; minio: MinioConfi
       return;
     }
 
+    if (segmentInFlight >= segmentMaxConcurrency) {
+      res.status(429).json({ error: { message: "Segmentation is busy. Try again." } });
+      return;
+    }
+
+    segmentInFlight += 1;
     try {
       const out = await new Promise<Buffer>((resolve, reject) => {
         const child = spawn(python, [scriptPath], { stdio: ["pipe", "pipe", "pipe"] });
@@ -329,10 +357,21 @@ export function wardrobeRouter(params: { prisma: PrismaClient; minio: MinioConfi
           reject(e);
         };
 
+        const timeout = setTimeout(() => {
+          try {
+            child.kill("SIGKILL");
+          } catch {}
+          settleErr(new Error("Segmentation timeout"));
+        }, segmentTimeoutMs);
+
         child.stdout.on("data", (c) => chunks.push(Buffer.isBuffer(c) ? c : Buffer.from(c)));
         child.stderr.on("data", (c) => errChunks.push(Buffer.isBuffer(c) ? c : Buffer.from(c)));
-        child.on("error", (e) => settleErr(e));
+        child.on("error", (e) => {
+          clearTimeout(timeout);
+          settleErr(e);
+        });
         child.on("close", (code) => {
+          clearTimeout(timeout);
           if (code === 0) return settleOk(Buffer.concat(chunks));
           const msg = Buffer.concat(errChunks).toString("utf8").slice(0, 3000) || `exit ${code ?? "?"}`;
           settleErr(new Error(msg));
@@ -362,6 +401,8 @@ export function wardrobeRouter(params: { prisma: PrismaClient; minio: MinioConfi
       });
     } catch (e) {
       res.status(502).json({ error: { message: e instanceof Error ? e.message : "Segmentation failed" } });
+    } finally {
+      segmentInFlight = Math.max(0, segmentInFlight - 1);
     }
   });
 

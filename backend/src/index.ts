@@ -62,8 +62,16 @@ async function ensureAdminUser() {
 
 const app = express();
 app.use(helmet());
-app.use(cors({ origin: true, credentials: true }));
-app.use(express.json({ limit: "25mb" }));
+const corsOrigins =
+  typeof process.env.CORS_ORIGIN === "string"
+    ? process.env.CORS_ORIGIN.split(",").map((s) => s.trim()).filter(Boolean)
+    : [];
+app.use(
+  cors({
+    origin: env.NODE_ENV === "production" ? (corsOrigins.length ? corsOrigins : false) : true,
+    credentials: false,
+  }),
+);
 
 app.use("/app", express.static(path.join(__dirname, "..", "public")));
 
@@ -103,6 +111,7 @@ app.get("/ready", async (req, res) => {
 
 app.use(
   "/api/auth",
+  express.json({ limit: "1mb" }),
   authRouter({
     prisma,
     accessSecret,
@@ -110,9 +119,10 @@ app.use(
   }),
 );
 
-app.use("/api/user", requireAuth(accessSecret), userRouter({ prisma }));
+app.use("/api/user", express.json({ limit: "1mb" }), requireAuth(accessSecret), userRouter({ prisma }));
 app.use(
   "/api/wardrobe",
+  express.json({ limit: "25mb" }),
   requireAuth(accessSecret),
   wardrobeRouter({
     prisma,
@@ -128,6 +138,7 @@ app.use(
 );
 app.use(
   "/api/outfits",
+  express.json({ limit: "1mb" }),
   requireAuth(accessSecret),
   outfitsRouter({
     prisma,
@@ -139,6 +150,7 @@ app.use(
 );
 app.use(
   "/api/weather",
+  express.json({ limit: "1mb" }),
   requireAuth(accessSecret),
   weatherRouter({ prisma, openWeatherApiKey: env.OPENWEATHER_API_KEY }),
 );

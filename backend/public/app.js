@@ -1763,7 +1763,21 @@ function setAvatarSelection(ids) {
 
 function setAvatarLayerTransforms(next) {
   state.avatarLayerTransforms = next && typeof next === "object" ? next : Object.create(null);
-  localStorage.setItem("avatarLayerTransforms", JSON.stringify(state.avatarLayerTransforms));
+}
+
+let avatarTransformsPersistTimer = null;
+function persistAvatarLayerTransformsNow() {
+  try {
+    localStorage.setItem("avatarLayerTransforms", JSON.stringify(state.avatarLayerTransforms || Object.create(null)));
+  } catch {}
+}
+
+function scheduleAvatarLayerTransformsPersist() {
+  if (avatarTransformsPersistTimer) clearTimeout(avatarTransformsPersistTimer);
+  avatarTransformsPersistTimer = setTimeout(() => {
+    avatarTransformsPersistTimer = null;
+    persistAvatarLayerTransformsNow();
+  }, 250);
 }
 
 function restoreAvatarLayerTransforms() {
@@ -1801,6 +1815,7 @@ function saveAvatarTransform(itemId, t) {
   const next = { ...(state.avatarLayerTransforms || Object.create(null)) };
   next[itemId] = { x: t.x, y: t.y, s: t.s, r: t.r ?? 0 };
   setAvatarLayerTransforms(next);
+  scheduleAvatarLayerTransformsPersist();
 }
 
 function applyAvatarLayerTransform(el, t) {
@@ -1819,7 +1834,12 @@ function defaultAvatarTransformForItem(item) {
 
 function setAvatarActive(itemId) {
   state.avatarActiveId = itemId || null;
-  renderAvatar().catch(() => {});
+  const root = els.avatarLayers || els.avatarStage;
+  if (!root) return;
+  for (const el of root.querySelectorAll(".avatar__layer")) {
+    const id = el?.dataset?.itemId;
+    el.classList.toggle("avatar__layer--active", Boolean(id && id === state.avatarActiveId));
+  }
 }
 
 function bindAvatarLayerGestures(el, itemId) {
@@ -1869,7 +1889,7 @@ function bindAvatarLayerGestures(el, itemId) {
       const dy = arr[0].y - arr[1].y;
       const dist = Math.max(1, Math.hypot(dx, dy));
       const ns = clamp(pinch.s0 * (dist / pinch.dist0), 0.25, 3.5);
-      const next = { x: t.x, y: t.y, s: ns };
+      const next = { x: t.x, y: t.y, s: ns, r: t.r };
       applyAvatarLayerTransform(el, next);
       saveAvatarTransform(itemId, next);
       return;
@@ -1878,7 +1898,7 @@ function bindAvatarLayerGestures(el, itemId) {
     if (drag && drag.id === e.pointerId) {
       const dx = e.clientX - drag.x0;
       const dy = e.clientY - drag.y0;
-      const next = { x: drag.tx + dx, y: drag.ty + dy, s: t.s };
+      const next = { x: drag.tx + dx, y: drag.ty + dy, s: t.s, r: t.r };
       applyAvatarLayerTransform(el, next);
       saveAvatarTransform(itemId, next);
     }
@@ -1889,6 +1909,7 @@ function bindAvatarLayerGestures(el, itemId) {
     pointers.delete(e.pointerId);
     if (drag && drag.id === e.pointerId) drag = null;
     if (pointers.size < 2) pinch = null;
+    if (pointers.size === 0) persistAvatarLayerTransformsNow();
   };
 
   el.addEventListener("pointerdown", onDown);
