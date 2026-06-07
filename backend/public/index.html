@@ -4,7 +4,7 @@
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <title>Wardrobe AI</title>
-    <link rel="stylesheet" href="/app/style.css?v=13" />
+    <link rel="stylesheet" href="/app/style.css?v=14" />
   </head>
   <body>
     <div class="app">
@@ -132,22 +132,20 @@
               <div class="card card--inner">
                 <div class="row row--space">
                   <h3>Гардероб</h3>
-                  <div class="row">
-                    <button class="btn btn--ghost" id="addItemBtn" type="button">
-                      <svg class="icon" viewBox="0 0 24 24" aria-hidden="true">
-                        <path d="M12 5v14" />
-                        <path d="M5 12h14" />
-                      </svg>
-                      <span>Добавить</span>
-                    </button>
-                    <button class="btn btn--ghost" id="refreshBtn" type="button">
+                  <button class="btn btn--ghost header-action" id="addItemBtn" type="button">
+                    <svg class="icon" viewBox="0 0 24 24" aria-hidden="true">
+                      <path d="M12 5v14" />
+                      <path d="M5 12h14" />
+                    </svg>
+                    <span>Добавить</span>
+                  </button>
+                  <button class="btn btn--ghost" id="refreshBtn" type="button">
                     <svg class="icon" viewBox="0 0 24 24" aria-hidden="true">
                       <path d="M20 12a8 8 0 1 1-2.3-5.7" />
                       <path d="M20 4v6h-6" />
                     </svg>
                     <span>Обновить</span>
-                    </button>
-                  </div>
+                  </button>
                 </div>
                 <label class="field">
                   <div class="field__label">Фильтр по типу</div>
@@ -507,6 +505,6 @@
       </main>
     </div>
 
-    <script type="module" src="/app/app.js?v=13"></script>
+    <script type="module" src="/app/app.js?v=14"></script>
   </body>
 </html>
