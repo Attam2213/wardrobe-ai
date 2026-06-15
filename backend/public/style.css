@@ -622,6 +622,113 @@ h3 {
   white-space: pre-wrap;
 }
 
+/* Плавающая кнопка FAB */
+.fab {
+  position: fixed;
+  bottom: 80px;
+  right: 16px;
+  width: 56px;
+  height: 56px;
+  border-radius: 50%;
+  border: none;
+  background: var(--accent);
+  color: white;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 4px 12px rgba(124, 58, 237, 0.4);
+  cursor: pointer;
+  z-index: 60;
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.fab:hover {
+  transform: scale(1.05);
+  box-shadow: 0 6px 16px rgba(124, 58, 237, 0.5);
+}
+
+.fab .icon {
+  width: 24px;
+  height: 24px;
+  stroke: currentColor;
+  stroke-width: 2.5;
+}
+
+/* Виджет погоды на главной */
+.weather-widget {
+  display: flex;
+  gap: 16px;
+  align-items: center;
+  padding: 16px;
+  background: linear-gradient(135deg, rgba(124, 58, 237, 0.12), rgba(99, 102, 241, 0.08));
+  border-radius: 16px;
+  border: 1px solid rgba(124, 58, 237, 0.2);
+}
+
+.weather-icon {
+  width: 64px;
+  height: 64px;
+  flex: 0 0 auto;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--accent);
+}
+
+.weather-icon .icon {
+  width: 48px;
+  height: 48px;
+  stroke-width: 1.5;
+}
+
+.weather-info {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.weather-temp {
+  font-size: 32px;
+  font-weight: 800;
+  color: var(--text);
+}
+
+.weather-desc {
+  font-size: 14px;
+  color: var(--muted);
+}
+
+/* Превью образа */
+.outfit-preview {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  padding: 12px;
+  background: rgba(15, 23, 42, 0.03);
+  border-radius: 12px;
+  border: 1px solid var(--border);
+  min-height: 80px;
+}
+
+.outfit-item {
+  width: 72px;
+  height: 72px;
+  border-radius: 12px;
+  border: 1px solid var(--border);
+  overflow: hidden;
+  background: white;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.outfit-item img {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+}
+
 .kv {
   font-size: 13px;
   color: var(--text);

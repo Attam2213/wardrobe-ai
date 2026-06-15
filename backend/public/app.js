@@ -31,6 +31,7 @@ const els = {
 
   refreshBtn: document.getElementById("refreshBtn"),
   addItemBtn: document.getElementById("addItemBtn"),
+  fabAddBtn: document.getElementById("fabAddBtn"),
   filterType: document.getElementById("filterType"),
   itemsList: document.getElementById("itemsList"),
   itemForm: document.getElementById("itemForm"),
@@ -2040,6 +2041,11 @@ if (els.refreshBtn) els.refreshBtn.addEventListener("click", () => renderWardrob
 if (els.filterType) els.filterType.addEventListener("change", () => renderWardrobe().catch(() => {}));
 if (els.addItemBtn) {
   els.addItemBtn.addEventListener("click", () => openAddModal({ prefillType: String(els.filterType?.value ?? "").trim() }));
+}
+
+// Обработчик плавающей кнопки добавления
+if (els.fabAddBtn) {
+  els.fabAddBtn.addEventListener("click", () => openAddModal({}));
 }
 
 for (const btn of els.navButtons) {

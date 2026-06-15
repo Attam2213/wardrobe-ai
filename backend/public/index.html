@@ -4,7 +4,7 @@
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <title>Wardrobe AI</title>
-    <link rel="stylesheet" href="/app/style.css?v=14" />
+    <link rel="stylesheet" href="/app/style.css?v=15" />
   </head>
   <body>
     <div class="app">
@@ -361,6 +361,14 @@
             </button>
           </nav>
 
+          <!-- Плавающая кнопка добавления вещи -->
+          <button class="fab" id="fabAddBtn" type="button" aria-label="Добавить вещь">
+            <svg class="icon" viewBox="0 0 24 24" aria-hidden="true">
+              <path d="M12 5v14" />
+              <path d="M5 12h14" />
+            </svg>
+          </button>
+
           <div class="modal modal--hidden" id="addModal">
             <div class="modal__backdrop" id="addModalBackdrop"></div>
             <div class="modal__sheet" role="dialog" aria-modal="true" aria-labelledby="addModalTitle">
@@ -505,6 +513,6 @@
       </main>
     </div>
 
-    <script type="module" src="/app/app.js?v=14"></script>
+    <script type="module" src="/app/app.js?v=15"></script>
   </body>
 </html>
