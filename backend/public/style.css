@@ -427,6 +427,101 @@ h3 {
   color: var(--muted);
 }
 
+/* Быстрые действия */
+.quick-actions {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 12px;
+}
+
+.quick-action {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 10px;
+  padding: 18px 12px;
+  border: none;
+  border-radius: 18px;
+  background: var(--card2);
+  color: var(--text);
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  text-decoration: none;
+}
+
+.quick-action:hover {
+  background: var(--accent-light);
+  transform: translateY(-2px);
+}
+
+.quick-action:active {
+  transform: translateY(0);
+}
+
+.quick-action__icon {
+  width: 28px;
+  height: 28px;
+  stroke-width: 2;
+  stroke: currentColor;
+  color: var(--accent);
+}
+
+.quick-action__label {
+  text-align: center;
+}
+
+/* Хедер секции */
+.section-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 16px;
+}
+
+.section-header__title {
+  margin: 0;
+  font-size: 18px;
+  font-weight: 700;
+}
+
+.section-header__action {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 12px;
+  border: none;
+  border-radius: 12px;
+  background: transparent;
+  color: var(--accent);
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 0.2s ease;
+}
+
+.section-header__action:hover {
+  background: var(--accent-light);
+}
+
+.section-header__action .icon {
+  width: 18px;
+  height: 18px;
+  stroke-width: 2;
+}
+
+/* Мобильные адаптации для новых элементов */
+@media (max-width: 768px) {
+  .quick-actions {
+    gap: 10px;
+  }
+
+  .quick-action {
+    padding: 16px 10px;
+  }
+}
+
 .chips {
   display: flex;
   flex-wrap: wrap;

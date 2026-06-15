@@ -4,7 +4,7 @@
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <title>Wardrobe AI</title>
-    <link rel="stylesheet" href="/app/style.css?v=18" />
+    <link rel="stylesheet" href="/app/style.css?v=19" />
   </head>
   <body>
     <div class="app">
@@ -58,6 +58,34 @@
 
           <div class="content">
             <section class="screen screen--active" id="screenHome">
+              <!-- Quick Actions - первое, что видит пользователь -->
+              <div class="card card--inner">
+                <h3>Быстрые действия</h3>
+                <div class="quick-actions">
+                  <button class="quick-action" id="quickAddItem" type="button">
+                    <svg class="quick-action__icon" viewBox="0 0 24 24" aria-hidden="true">
+                      <path d="M12 4v16" />
+                      <path d="M4 12h16" />
+                    </svg>
+                    <span class="quick-action__label">Добавить вещь</span>
+                  </button>
+                  <button class="quick-action" id="quickSuggestOutfit" type="button">
+                    <svg class="quick-action__icon" viewBox="0 0 24 24" aria-hidden="true">
+                      <path d="M12 3l1.2 3.8L17 8l-3.8 1.2L12 13l-1.2-3.8L7 8l3.8-1.2L12 3z" />
+                    </svg>
+                    <span class="quick-action__label">Подобрать образ</span>
+                  </button>
+                  <button class="quick-action" id="quickGoAvatar" type="button">
+                    <svg class="quick-action__icon" viewBox="0 0 24 24" aria-hidden="true">
+                      <path d="M12 12c2.2 0 4-1.8 4-4S14.2 4 12 4s-4 1.8-4 4 1.8 4 4 4z" />
+                      <path d="M21 22H3c0-4 4-7 9-7s9 3 9 7z" />
+                    </svg>
+                    <span class="quick-action__label">Примерить</span>
+                  </button>
+                </div>
+              </div>
+
+              <!-- Weather widget -->
               <div class="card card--inner">
                 <h3>Погода</h3>
                 <div class="weather-widget" id="homeWeatherWidget">
@@ -81,34 +109,37 @@
                 </div>
               </div>
 
+              <!-- AI Outfit Suggestion -->
               <div class="card card--inner">
-                <div class="row row--space">
-                  <h3>Подбор на сегодня</h3>
-                  <button class="btn btn--ghost" id="homeSuggestBtn" type="button">
+                <div class="section-header">
+                  <h3 class="section-header__title">Подбор на сегодня</h3>
+                  <button class="section-header__action" id="homeSuggestBtn" type="button">
                     <svg class="icon" viewBox="0 0 24 24" aria-hidden="true">
-                      <path d="M12 3l1.2 3.8L17 8l-3.8 1.2L12 13l-1.2-3.8L7 8l3.8-1.2L12 3z" />
+                      <path d="M4 4h16v16H4z" />
+                      <path d="M4 12h16" />
+                      <path d="M12 4v16" />
                     </svg>
-                    <span>Подобрать</span>
+                    <span>Обновить</span>
                   </button>
                 </div>
                 <div class="outfit-preview" id="homeOutfitPreview">
-                  <div class="muted">Нажми «Подобрать», чтобы AI предложил образ</div>
+                  <div class="muted">Нажми «Подобрать образ» выше, чтобы AI предложил вариант</div>
                 </div>
                 <div class="row" id="homeOutfitActions" style="display: none;">
-                  <button class="btn btn--ghost" id="homeApplyOutfitBtn" type="button">Примерить</button>
+                  <button class="btn" id="homeApplyOutfitBtn" type="button">Примерить</button>
                   <button class="btn btn--ghost" id="homeLikeOutfitBtn" type="button">Нравится</button>
                 </div>
                 <div class="error" id="homeError"></div>
               </div>
 
+              <!-- Recent Items -->
               <div class="card card--inner">
-                <div class="row row--space">
-                  <h3>Последние вещи</h3>
-                  <button class="btn btn--ghost" id="goWardrobeBtn" type="button">
+                <div class="section-header">
+                  <h3 class="section-header__title">Последние вещи</h3>
+                  <button class="section-header__action" id="goWardrobeBtn" type="button">
                     <svg class="icon" viewBox="0 0 24 24" aria-hidden="true">
-                      <path d="M4 7h16" />
-                      <path d="M4 12h16" />
-                      <path d="M4 17h16" />
+                      <path d="M5 12h14" />
+                      <path d="M12 5l7 7-7 7" />
                     </svg>
                     <span>Все вещи</span>
                   </button>
@@ -116,6 +147,7 @@
                 <div class="grid grid--mini" id="homeRecentItems"></div>
               </div>
 
+              <!-- Categories -->
               <div class="card card--inner">
                 <h3>Категории</h3>
                 <div class="grid grid--mini">
@@ -545,6 +577,6 @@
       </main>
     </div>
 
-    <script type="module" src="/app/app.js?v=18"></script>
+    <script type="module" src="/app/app.js?v=19"></script>
   </body>
 </html>

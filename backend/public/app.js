@@ -29,6 +29,11 @@ const els = {
   homeError: document.getElementById("homeError"),
   goWardrobeBtn: document.getElementById("goWardrobeBtn"),
 
+  // Quick actions
+  quickAddItem: document.getElementById("quickAddItem"),
+  quickSuggestOutfit: document.getElementById("quickSuggestOutfit"),
+  quickGoAvatar: document.getElementById("quickGoAvatar"),
+
   refreshBtn: document.getElementById("refreshBtn"),
   addItemBtn: document.getElementById("addItemBtn"),
   fabAddBtn: document.getElementById("fabAddBtn"),
@@ -2095,6 +2100,19 @@ if (els.addItemBtn) {
 // Обработчик плавающей кнопки добавления
 if (els.fabAddBtn) {
   els.fabAddBtn.addEventListener("click", () => openAddModal({}));
+}
+
+// Быстрые действия (quick actions)
+if (els.quickAddItem) {
+  els.quickAddItem.addEventListener("click", () => openAddModal({}));
+}
+if (els.quickSuggestOutfit) {
+  els.quickSuggestOutfit.addEventListener("click", () =>
+    homeSuggest().catch((e) => setText(els.homeError, e?.message ?? String(e))),
+  );
+}
+if (els.quickGoAvatar) {
+  els.quickGoAvatar.addEventListener("click", () => setScreen("avatar"));
 }
 
 for (const btn of els.navButtons) {
