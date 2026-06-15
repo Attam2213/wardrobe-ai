@@ -69,6 +69,26 @@ h3 {
   font-size: 18px;
 }
 
+/* Мобильная версия — полный экран без рамок */
+@media (max-width: 768px) {
+  .app {
+    max-width: 100%;
+    padding: 0;
+    padding-bottom: 100px;
+  }
+
+  .main {
+    gap: 0;
+  }
+
+  .card {
+    border-radius: 0;
+    box-shadow: none;
+    border: none;
+    padding: 20px;
+  }
+}
+
 .form {
   display: flex;
   flex-direction: column;
@@ -225,6 +245,29 @@ h3 {
   display: flex;
 }
 
+/* Мобильная версия — убираем рамки у shell и топбар */
+@media (max-width: 768px) {
+  .shell {
+    border-radius: 0;
+    border: none;
+    box-shadow: none;
+  }
+
+  .topbar {
+    padding: 20px 20px 16px;
+  }
+
+  .content {
+    padding: 20px;
+    padding-bottom: 110px;
+    gap: 16px;
+  }
+
+  .screen {
+    gap: 16px;
+  }
+}
+
 .nav {
   position: fixed;
   left: 50%;
@@ -240,6 +283,15 @@ h3 {
   backdrop-filter: blur(20px);
   -webkit-backdrop-filter: blur(20px);
   box-shadow: var(--shadow);
+}
+
+/* Мобильная версия — навигация на всю ширину снизу */
+@media (max-width: 768px) {
+  .nav {
+    width: calc(100% - 24px);
+    bottom: 12px;
+    padding: 10px;
+  }
 }
 
 .nav__btn {
@@ -439,6 +491,19 @@ h3 {
 .modal__title {
   font-weight: 700;
   font-size: 20px;
+}
+
+/* Мобильная версия — модалка на весь экран снизу */
+@media (max-width: 768px) {
+  .modal__sheet {
+    border-radius: 24px 24px 0 0;
+    padding: 20px;
+    max-height: 90vh;
+  }
+
+  .modal__header {
+    margin-bottom: 16px;
+  }
 }
 
 .modal__body {
@@ -705,6 +770,21 @@ h3 {
   height: 28px;
   stroke: currentColor;
   stroke-width: 2.5;
+}
+
+/* Мобильная версия — немного меньше FAB */
+@media (max-width: 768px) {
+  .fab {
+    bottom: 85px;
+    right: 16px;
+    width: 56px;
+    height: 56px;
+  }
+
+  .fab .icon {
+    width: 24px;
+    height: 24px;
+  }
 }
 
 /* Виджет погоды на главной */
