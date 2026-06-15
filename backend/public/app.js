@@ -160,6 +160,7 @@ function setScreen(name) {
   for (const btn of els.navButtons) {
     btn.classList.toggle("nav__btn--active", btn.dataset.screen === name);
   }
+  if (name === "home") renderRecentItems().catch(() => {});
   if (name === "wardrobe") renderWardrobe().catch(() => {});
   if (name === "avatar") renderAvatar().catch(() => {});
   if (name === "settings") renderProfile().catch(() => {});
@@ -1469,56 +1470,104 @@ async function renderWardrobe() {
 
   for (const item of filtered) {
     const div = document.createElement("div");
-    div.className = "item";
+    div.className = "wardrobe-item";
 
-    const pill = document.createElement("span");
-    pill.className = "pill";
+    // Изображение
+    const imageWrap = document.createElement("div");
+    imageWrap.className = "wardrobe-item__image";
+    if (item.photoUrl) {
+      const img = document.createElement("img");
+      img.src = item.photoUrl;
+      img.alt = item.name;
+      imageWrap.appendChild(img);
+    } else {
+      imageWrap.innerHTML = `
+        <svg class="icon" viewBox="0 0 24 24" aria-hidden="true" style="width:48px;height:48px;color:var(--muted)">
+          <path d="M4 7h16M4 12h16M4 17h16" stroke="currentColor" stroke-width="2" stroke-linecap="round" />
+        </svg>
+      `;
+    }
+
+    // Информация
+    const info = document.createElement("div");
+    info.className = "wardrobe-item__info";
+
+    const name = document.createElement("div");
+    name.className = "wardrobe-item__name";
+    name.textContent = item.name;
+
+    const meta = document.createElement("div");
+    meta.className = "wardrobe-item__meta";
     const parts = [];
     parts.push(String(item.type));
     if (item.color) parts.push(String(item.color));
     if (item.season) parts.push(String(item.season));
-    if (item.warmth != null) parts.push(`теплота ${item.warmth}`);
+    if (item.warmth != null) parts.push(`🔥 ${item.warmth}`);
     if (item.style) parts.push(String(item.style));
-    pill.textContent = parts.join(" • ");
-
-    const top = document.createElement("div");
-    top.className = "item__top";
-
-    const name = document.createElement("div");
-    name.className = "item__name";
-    name.textContent = item.name;
-
-    const del = document.createElement("button");
-    del.type = "button";
-    del.className = "btn btn--ghost";
-    del.textContent = "Удалить";
-    del.addEventListener("click", async () => {
-      const resp2 = await apiFetch(`/api/wardrobe/${item.id}`, { method: "DELETE" });
-      if (!resp2.ok) {
-        setText(els.itemError, await resp2.text());
-        return;
-      }
-      await renderWardrobe();
-      await renderAvatar();
+    parts.forEach(p => {
+      const span = document.createElement("span");
+      span.textContent = p;
+      meta.appendChild(span);
     });
 
-    top.appendChild(name);
-    top.appendChild(del);
+    info.appendChild(name);
+    info.appendChild(meta);
 
-    div.appendChild(top);
-    div.appendChild(pill);
+    // Клик для добавления на аватар
+    div.addEventListener("click", async () => {
+      state.avatarSelectedIds.add(item.id);
+      await renderAvatar();
+      setScreen("avatar");
+    });
 
-    if (item.photoUrl) {
-      const media = document.createElement("div");
-      media.className = "item__media";
-      const img = document.createElement("img");
-      img.src = item.photoUrl;
-      img.alt = item.name;
-      media.appendChild(img);
-      div.appendChild(media);
-    }
+    div.appendChild(imageWrap);
+    div.appendChild(info);
 
     els.itemsList.appendChild(div);
+  }
+}
+
+async function renderRecentItems() {
+  const container = document.getElementById("homeRecentItems");
+  if (!container) return;
+  container.innerHTML = "";
+
+  let items;
+  try {
+    items = await fetchWardrobe();
+  } catch {
+    return;
+  }
+
+  const recent = items.slice(0, 4); // последние 4 вещи
+  if (recent.length === 0) {
+    container.innerHTML = '<div class="muted">Пока нет вещей</div>';
+    return;
+  }
+
+  for (const item of recent) {
+    const tile = document.createElement("button");
+    tile.type = "button";
+    tile.className = "tile";
+    tile.innerHTML = `
+      <span class="tile__icon" aria-hidden="true">
+        ${item.photoUrl ? `<img src="${item.photoUrl}" alt="" style="width:100%;height:100%;object-fit:contain;border-radius:12px" />` : `
+          <svg class="icon" viewBox="0 0 24 24" aria-hidden="true">
+            <path d="M4 7h16M4 12h16M4 17h16" stroke="currentColor" stroke-width="2" stroke-linecap="round" />
+          </svg>
+        `}
+      </span>
+      <span class="tile__label">
+        <span>${item.name}</span>
+        <span class="tile__sub">${item.type}</span>
+      </span>
+    `;
+    tile.addEventListener("click", async () => {
+      state.avatarSelectedIds.add(item.id);
+      await renderAvatar();
+      setScreen("avatar");
+    });
+    container.appendChild(tile);
   }
 }
 

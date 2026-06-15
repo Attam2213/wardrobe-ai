@@ -4,7 +4,7 @@
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <title>Wardrobe AI</title>
-    <link rel="stylesheet" href="/app/style.css?v=15" />
+    <link rel="stylesheet" href="/app/style.css?v=16" />
   </head>
   <body>
     <div class="app">
@@ -59,8 +59,51 @@
           <div class="content">
             <section class="screen screen--active" id="screenHome">
               <div class="card card--inner">
+                <h3>Погода</h3>
+                <div class="weather-widget" id="homeWeatherWidget">
+                  <div class="weather-icon" aria-hidden="true">
+                    <svg class="icon" viewBox="0 0 24 24">
+                      <path d="M12 2v4" />
+                      <path d="M12 18v4" />
+                      <path d="M4.93 4.93l2.83 2.83" />
+                      <path d="M16.24 16.24l2.83 2.83" />
+                      <path d="M2 12h4" />
+                      <path d="M18 12h4" />
+                      <path d="M4.93 19.07l2.83-2.83" />
+                      <path d="M16.24 7.76l2.83-2.83" />
+                      <path d="M12 8a4 4 0 1 0 0 8 4 4 0 0 0 0-8z" />
+                    </svg>
+                  </div>
+                  <div class="weather-info">
+                    <div class="weather-temp" id="homeWeatherTemp">—°</div>
+                    <div class="weather-desc" id="homeWeatherDesc">Нажми «GPS» в AI, чтобы узнать погоду</div>
+                  </div>
+                </div>
+              </div>
+
+              <div class="card card--inner">
                 <div class="row row--space">
-                  <h3>Мой гардероб</h3>
+                  <h3>Подбор на сегодня</h3>
+                  <button class="btn btn--ghost" id="homeSuggestBtn" type="button">
+                    <svg class="icon" viewBox="0 0 24 24" aria-hidden="true">
+                      <path d="M12 3l1.2 3.8L17 8l-3.8 1.2L12 13l-1.2-3.8L7 8l3.8-1.2L12 3z" />
+                    </svg>
+                    <span>Подобрать</span>
+                  </button>
+                </div>
+                <div class="outfit-preview" id="homeOutfitPreview">
+                  <div class="muted">Нажми «Подобрать», чтобы AI предложил образ</div>
+                </div>
+                <div class="row" id="homeOutfitActions" style="display: none;">
+                  <button class="btn btn--ghost" id="homeApplyOutfitBtn" type="button">Примерить</button>
+                  <button class="btn btn--ghost" id="homeLikeOutfitBtn" type="button">Нравится</button>
+                </div>
+                <div class="error" id="homeError"></div>
+              </div>
+
+              <div class="card card--inner">
+                <div class="row row--space">
+                  <h3>Последние вещи</h3>
                   <button class="btn btn--ghost" id="goWardrobeBtn" type="button">
                     <svg class="icon" viewBox="0 0 24 24" aria-hidden="true">
                       <path d="M4 7h16" />
@@ -70,6 +113,11 @@
                     <span>Все вещи</span>
                   </button>
                 </div>
+                <div class="grid grid--mini" id="homeRecentItems"></div>
+              </div>
+
+              <div class="card card--inner">
+                <h3>Категории</h3>
                 <div class="grid grid--mini">
                   <button class="tile" data-go="wardrobe" data-type="shirt" type="button">
                     <span class="tile__icon" aria-hidden="true">
@@ -115,15 +163,6 @@
                     </span>
                     <span class="tile__label"><span>Аксессуары</span><span class="tile__sub">детали</span></span>
                   </button>
-                  <button class="tile tile--plus" data-go="wardrobe" type="button">
-                    <span class="tile__icon" aria-hidden="true">
-                      <svg class="icon" viewBox="0 0 24 24">
-                        <path d="M12 5v14" />
-                        <path d="M5 12h14" />
-                      </svg>
-                    </span>
-                    <span class="tile__label"><span>Добавить</span><span class="tile__sub">вещь</span></span>
-                  </button>
                 </div>
               </div>
             </section>
@@ -132,13 +171,6 @@
               <div class="card card--inner">
                 <div class="row row--space">
                   <h3>Гардероб</h3>
-                  <button class="btn btn--ghost header-action" id="addItemBtn" type="button">
-                    <svg class="icon" viewBox="0 0 24 24" aria-hidden="true">
-                      <path d="M12 5v14" />
-                      <path d="M5 12h14" />
-                    </svg>
-                    <span>Добавить</span>
-                  </button>
                   <button class="btn btn--ghost" id="refreshBtn" type="button">
                     <svg class="icon" viewBox="0 0 24 24" aria-hidden="true">
                       <path d="M20 12a8 8 0 1 1-2.3-5.7" />
@@ -159,7 +191,7 @@
                     <option value="other">Другое</option>
                   </select>
                 </label>
-                <div class="list" id="itemsList"></div>
+                <div class="grid grid--wardrobe" id="itemsList"></div>
                 <div class="error" id="itemError"></div>
               </div>
             </section>
@@ -513,6 +545,6 @@
       </main>
     </div>
 
-    <script type="module" src="/app/app.js?v=15"></script>
+    <script type="module" src="/app/app.js?v=16"></script>
   </body>
 </html>
