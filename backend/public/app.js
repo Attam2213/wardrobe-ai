@@ -2469,10 +2469,13 @@ async function enterApp() {
 
   restoreAvatarSelection();
   restoreAvatarLayerTransforms();
-  applyAvatarStyle();
+  // applyAvatarStyle убрали, так как старый стиль не нужен
   await renderTopbar();
   setScreen("home");
   await renderWardrobe();
+  
+  // Попробуем инициализировать 3D после небольшой задержки
+  setTimeout(tryInit3D, 300);
   
   // Автоматически загружаем погоду
   try {
@@ -2993,9 +2996,6 @@ els.logoutBtn.addEventListener("click", async () => {
 });
 
 // 3D аватар
-import * as THREE from 'three';
-import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
-
 let scene, camera, renderer, controls, avatarGroup;
 let currentGender = 'male';
 let is3DInitialized = false;
@@ -3004,7 +3004,7 @@ function init3DAvatar() {
   const container = document.getElementById('avatar3DContainer');
   const canvas = document.getElementById('avatar3DCanvas');
   
-  if (!container || !canvas) return;
+  if (!container || !canvas || typeof THREE === 'undefined') return;
   
   // Создаем сцену
   scene = new THREE.Scene();
@@ -3021,7 +3021,7 @@ function init3DAvatar() {
   renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
   
   // Орбита (вращение камеры)
-  controls = new OrbitControls(camera, renderer.domElement);
+  controls = new THREE.OrbitControls(camera, renderer.domElement);
   controls.enableDamping = true;
   controls.dampingFactor = 0.05;
   controls.minDistance = 2;
@@ -3150,25 +3150,24 @@ function updateAvatarGender(gender) {
   }
 }
 
-// Инициализация 3D, когда экран аватара открывается
-function ensure3DInitialized() {
-  if (!is3DInitialized && document.getElementById('screenAvatar')?.classList.contains('screen--active')) {
+// Инициализация 3D сразу после входа в приложение
+function tryInit3D() {
+  if (is3DInitialized) return;
+  const container = document.getElementById('avatar3DContainer');
+  const canvas = document.getElementById('avatar3DCanvas');
+  if (container && canvas && container.clientWidth > 0 && container.clientHeight > 0) {
     init3DAvatar();
   }
 }
 
-// Обработчик переключения экранов
-const originalSetScreen = setScreen;
-window.setScreen = function(screenName) {
-  originalSetScreen(screenName);
-  if (screenName === 'avatar') {
-    setTimeout(() => ensure3DInitialized(), 50);
-  }
-};
-
-// Также инициализируем при первой загрузке, если экран аватара активен
-document.addEventListener('DOMContentLoaded', () => {
-  setTimeout(() => ensure3DInitialized(), 100);
+// Обработчик на все кнопки навигации
+document.querySelectorAll('.nav-item').forEach(el => {
+  el.addEventListener('click', () => {
+    const screen = el.getAttribute('data-screen');
+    if (screen === 'avatar') {
+      setTimeout(tryInit3D, 100);
+    }
+  });
 });
 
 // Обработчик выбора пола аватара
