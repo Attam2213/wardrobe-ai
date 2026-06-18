@@ -4,7 +4,7 @@
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <title>Wardrobe AI</title>
-    <link rel="stylesheet" href="/app/style.css?v=23" />
+    <link rel="stylesheet" href="/app/style.css?v=24" />
   </head>
   <body>
     <div class="app">
@@ -229,17 +229,33 @@
                   </button>
                 </div>
                 <label class="field">
-                  <div class="field__label">Фильтр по типу</div>
-                  <select class="input" id="filterType">
-                    <option value="">Все</option>
-                    <option value="shirt">Рубашка</option>
-                    <option value="pants">Штаны</option>
-                    <option value="jacket">Куртка</option>
-                    <option value="shoes">Обувь</option>
-                    <option value="accessories">Аксессуары</option>
-                    <option value="other">Другое</option>
-                  </select>
+                  <div class="field__label">Поиск</div>
+                  <input class="input" id="searchInput" type="text" placeholder="Поиск по названию..." />
                 </label>
+                <div class="row">
+                  <label class="field" style="flex:1">
+                    <div class="field__label">Фильтр по типу</div>
+                    <select class="input" id="filterType">
+                      <option value="">Все</option>
+                      <option value="shirt">Рубашка</option>
+                      <option value="pants">Штаны</option>
+                      <option value="jacket">Куртка</option>
+                      <option value="shoes">Обувь</option>
+                      <option value="accessories">Аксессуары</option>
+                      <option value="other">Другое</option>
+                    </select>
+                  </label>
+                  <label class="field" style="flex:1">
+                    <div class="field__label">Фильтр по сезону</div>
+                    <select class="input" id="filterSeason">
+                      <option value="">Любой</option>
+                      <option value="summer">Лето</option>
+                      <option value="spring">Весна</option>
+                      <option value="autumn">Осень</option>
+                      <option value="winter">Зима</option>
+                    </select>
+                  </label>
+                </div>
                 <div class="grid grid--wardrobe" id="itemsList"></div>
                 <div class="error" id="itemError"></div>
               </div>
@@ -600,6 +616,6 @@
       </main>
     </div>
 
-    <script type="module" src="/app/app.js?v=23"></script>
+    <script type="module" src="/app/app.js?v=24"></script>
   </body>
 </html>

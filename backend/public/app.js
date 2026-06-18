@@ -37,6 +37,14 @@ const els = {
   outfitsList: document.getElementById("outfitsList"),
   outfitsError: document.getElementById("outfitsError"),
 
+  // Wardrobe screen
+  refreshBtn: document.getElementById("refreshBtn"),
+  searchInput: document.getElementById("searchInput"),
+  filterType: document.getElementById("filterType"),
+  filterSeason: document.getElementById("filterSeason"),
+  itemsList: document.getElementById("itemsList"),
+  itemError: document.getElementById("itemError"),
+
   // Quick actions
   quickAddItem: document.getElementById("quickAddItem"),
   quickSuggestOutfit: document.getElementById("quickSuggestOutfit"),
@@ -402,9 +410,16 @@ async function loadShoppingList({ temperature, condition, occasion }) {
 }
 
 function applyFilter(items) {
-  const t = String(els.filterType?.value ?? "").trim();
-  if (!t) return items;
-  return items.filter((i) => i.type === t);
+  const type = String(els.filterType?.value ?? "").trim();
+  const season = String(els.filterSeason?.value ?? "").trim();
+  const search = String(els.searchInput?.value ?? "").trim().toLowerCase();
+  
+  return items.filter((item) => {
+    if (type && item.type !== type) return false;
+    if (season && item.season !== season) return false;
+    if (search && !String(item.name ?? "").toLowerCase().includes(search)) return false;
+    return true;
+  });
 }
 
 function toTitleWord(s) {
@@ -2352,6 +2367,8 @@ els.authForm.addEventListener("submit", onAuthSubmit);
 
 if (els.refreshBtn) els.refreshBtn.addEventListener("click", () => renderWardrobe().catch(() => {}));
 if (els.filterType) els.filterType.addEventListener("change", () => renderWardrobe().catch(() => {}));
+if (els.filterSeason) els.filterSeason.addEventListener("change", () => renderWardrobe().catch(() => {}));
+if (els.searchInput) els.searchInput.addEventListener("input", () => renderWardrobe().catch(() => {}));
 if (els.addItemBtn) {
   els.addItemBtn.addEventListener("click", () => openAddModal({ prefillType: String(els.filterType?.value ?? "").trim() }));
 }
