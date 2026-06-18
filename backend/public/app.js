@@ -2992,5 +2992,145 @@ els.logoutBtn.addEventListener("click", async () => {
   await enterApp();
 });
 
+// 3D аватар
+import * as THREE from 'three';
+import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
+
+let scene, camera, renderer, controls, avatarGroup;
+let currentGender = 'male';
+
+function init3DAvatar() {
+  const container = document.getElementById('avatar3DContainer');
+  const canvas = document.getElementById('avatar3DCanvas');
+  
+  // Создаем сцену
+  scene = new THREE.Scene();
+  scene.background = new THREE.Color(0xf8f9fa);
+  
+  // Камера
+  camera = new THREE.PerspectiveCamera(45, container.clientWidth / container.clientHeight, 0.1, 1000);
+  camera.position.z = 5;
+  
+  // Рендерер
+  renderer = new THREE.WebGLRenderer({ canvas, antialias: true });
+  renderer.setSize(container.clientWidth, container.clientHeight);
+  renderer.setPixelRatio(window.devicePixelRatio);
+  
+  // Орбита (вращение камеры)
+  controls = new OrbitControls(camera, renderer.domElement);
+  controls.enableDamping = true;
+  controls.dampingFactor = 0.05;
+  controls.minDistance = 2;
+  controls.maxDistance = 10;
+  
+  // Свет
+  const ambientLight = new THREE.AmbientLight(0xffffff, 0.6);
+  scene.add(ambientLight);
+  
+  const directionalLight = new THREE.DirectionalLight(0xffffff, 0.8);
+  directionalLight.position.set(5, 5, 5);
+  scene.add(directionalLight);
+  
+  // Группа для аватара
+  avatarGroup = new THREE.Group();
+  scene.add(avatarGroup);
+  
+  // Рисуем начальный аватар
+  createAvatar();
+  
+  // Анимация
+  function animate() {
+    requestAnimationFrame(animate);
+    controls.update();
+    renderer.render(scene, camera);
+  }
+  animate();
+  
+  // Обработчик изменения размера
+  window.addEventListener('resize', onWindowResize);
+}
+
+function onWindowResize() {
+  const container = document.getElementById('avatar3DContainer');
+  camera.aspect = container.clientWidth / container.clientHeight;
+  camera.updateProjectionMatrix();
+  renderer.setSize(container.clientWidth, container.clientHeight);
+}
+
+function createAvatar() {
+  // Очищаем старую модель
+  while (avatarGroup.children.length > 0) {
+    const child = avatarGroup.children[0];
+    avatarGroup.remove(child);
+  }
+  
+  // Цвета для мужского и женского
+  const color = currentGender === 'male' ? 0x3b82f6 : 0xec4899;
+  
+  // Тело (куб)
+  const bodyGeometry = new THREE.BoxGeometry(1, 1.5, 0.5);
+  const bodyMaterial = new THREE.MeshStandardMaterial({ color });
+  const body = new THREE.Mesh(bodyGeometry, bodyMaterial);
+  body.position.y = 0.25;
+  avatarGroup.add(body);
+  
+  // Голова (сфера)
+  const headGeometry = new THREE.SphereGeometry(0.35, 32, 32);
+  const headMaterial = new THREE.MeshStandardMaterial({ color: 0xfdbcb4 });
+  const head = new THREE.Mesh(headGeometry, headMaterial);
+  head.position.y = 1.3;
+  avatarGroup.add(head);
+  
+  // Руки
+  const armGeometry = new THREE.BoxGeometry(0.25, 1, 0.25);
+  const armMaterial = new THREE.MeshStandardMaterial({ color: 0xfdbcb4 });
+  
+  const leftArm = new THREE.Mesh(armGeometry, armMaterial);
+  leftArm.position.set(-0.6, 0.5, 0);
+  avatarGroup.add(leftArm);
+  
+  const rightArm = new THREE.Mesh(armGeometry, armMaterial);
+  rightArm.position.set(0.6, 0.5, 0);
+  avatarGroup.add(rightArm);
+  
+  // Ноги
+  const legGeometry = new THREE.BoxGeometry(0.3, 1, 0.3);
+  const legMaterial = new THREE.MeshStandardMaterial({ color: 0x2d3748 });
+  
+  const leftLeg = new THREE.Mesh(legGeometry, legMaterial);
+  leftLeg.position.set(-0.2, -1, 0);
+  avatarGroup.add(leftLeg);
+  
+  const rightLeg = new THREE.Mesh(legGeometry, legMaterial);
+  rightLeg.position.set(0.2, -1, 0);
+  avatarGroup.add(rightLeg);
+}
+
+function updateAvatarGender(gender) {
+  currentGender = gender;
+  createAvatar();
+}
+
+// Инициализация 3D, когда экран аватара открывается
+let is3DInitialized = false;
+document.querySelectorAll('.nav-item[data-screen="avatar"]').forEach((el) => {
+  el.addEventListener('click', () => {
+    setTimeout(() => {
+      if (!is3DInitialized) {
+        init3DAvatar();
+        is3DInitialized = true;
+      }
+    }, 100);
+  });
+});
+
+// Обработчик выбора пола аватара
+const avatarGenderSelect = document.getElementById('avatarGenderSelect');
+if (avatarGenderSelect) {
+  avatarGenderSelect.addEventListener('change', () => {
+    updateAvatarGender(avatarGenderSelect.value);
+  });
+}
+
 setAuthMode("login");
 await enterApp();
