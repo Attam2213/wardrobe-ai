@@ -48,7 +48,6 @@ const els = {
 
   // Avatar screen
   avatarSaveOutfitBtn: document.getElementById("avatarSaveOutfitBtn"),
-  avatarStyleSelect: document.getElementById("avatarStyleSelect"),
 
   // Quick actions
   quickAddItem: document.getElementById("quickAddItem"),
@@ -444,7 +443,6 @@ function applyAvatarStyle() {
   const style = getAvatarStyle();
   const avatarBase = document.getElementById("avatarBase");
   if (avatarBase) avatarBase.setAttribute("data-style", style);
-  if (els.avatarStyleSelect) els.avatarStyleSelect.value = style;
 }
 
 function toTitleWord(s) {
@@ -2494,11 +2492,7 @@ if (els.addItemBtn) {
   els.addItemBtn.addEventListener("click", () => openAddModal({ prefillType: String(els.filterType?.value ?? "").trim() }));
 }
 
-if (els.avatarStyleSelect) {
-  els.avatarStyleSelect.addEventListener("change", () => {
-    setAvatarStyle(els.avatarStyleSelect.value);
-  });
-}
+
 
 // Обработчик плавающей кнопки добавления
 if (els.fabAddBtn) {
