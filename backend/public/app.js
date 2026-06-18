@@ -3004,7 +3004,7 @@ function init3DAvatar() {
   const container = document.getElementById('avatar3DContainer');
   const canvas = document.getElementById('avatar3DCanvas');
   
-  if (!container || !canvas || typeof THREE === 'undefined') return;
+  if (!container || !canvas) return;
   
   // Создаем сцену
   scene = new THREE.Scene();
@@ -3020,13 +3020,13 @@ function init3DAvatar() {
   renderer.setSize(container.clientWidth, container.clientHeight);
   renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
   
-  // Орбита (вращение камеры)
-  controls = new THREE.OrbitControls(camera, renderer.domElement);
-  controls.enableDamping = true;
-  controls.dampingFactor = 0.05;
-  controls.minDistance = 2;
-  controls.maxDistance = 10;
-  controls.target.set(0, 1, 0);
+  // Орбита (вращение камеры) - временно отключено
+  // controls = new OrbitControls(camera, renderer.domElement);
+  // controls.enableDamping = true;
+  // controls.dampingFactor = 0.05;
+  // controls.minDistance = 2;
+  // controls.maxDistance = 10;
+  // controls.target.set(0, 1, 0);
   
   // Свет
   const ambientLight = new THREE.AmbientLight(0xffffff, 0.7);
@@ -3050,7 +3050,10 @@ function init3DAvatar() {
   // Анимация
   function animate() {
     requestAnimationFrame(animate);
-    controls.update();
+    // controls.update();
+    if (avatarGroup) {
+      avatarGroup.rotation.y += 0.005;
+    }
     renderer.render(scene, camera);
   }
   animate();
@@ -3161,7 +3164,7 @@ function tryInit3D() {
 }
 
 // Обработчик на все кнопки навигации
-document.querySelectorAll('.nav-item').forEach(el => {
+document.querySelectorAll('.nav__btn').forEach(el => {
   el.addEventListener('click', () => {
     const screen = el.getAttribute('data-screen');
     if (screen === 'avatar') {
