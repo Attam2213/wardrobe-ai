@@ -21,6 +21,7 @@ const els = {
     avatar: document.getElementById("screenAvatar"),
     assistant: document.getElementById("screenAssistant"),
     settings: document.getElementById("screenSettings"),
+    outfits: document.getElementById("screenOutfits"),
   },
 
   homeSuggestBtn: document.getElementById("homeSuggestBtn"),
@@ -30,6 +31,11 @@ const els = {
   goWardrobeBtn: document.getElementById("goWardrobeBtn"),
   homeApplyOutfitBtn: document.getElementById("homeApplyOutfitBtn"),
   homeLikeOutfitBtn: document.getElementById("homeLikeOutfitBtn"),
+
+  // Outfits screen
+  refreshOutfitsBtn: document.getElementById("refreshOutfitsBtn"),
+  outfitsList: document.getElementById("outfitsList"),
+  outfitsError: document.getElementById("outfitsError"),
 
   // Quick actions
   quickAddItem: document.getElementById("quickAddItem"),
@@ -171,6 +177,7 @@ function setScreen(name) {
   if (name === "wardrobe") renderWardrobe().catch(() => {});
   if (name === "avatar") renderAvatar().catch(() => {});
   if (name === "settings") renderProfile().catch(() => {});
+  if (name === "outfits") loadOutfits().catch(() => {});
 }
 
 async function apiFetch(path, { method = "GET", body } = {}) {
@@ -1670,6 +1677,153 @@ async function renderHomeWeather() {
   }
 }
 
+async function loadOutfits() {
+  setText(els.outfitsError, "");
+  try {
+    const resp = await apiFetch("/api/outfits");
+    if (!resp.ok) {
+      setText(els.outfitsError, "Не удалось загрузить образы");
+      return;
+    }
+    const data = await resp.json();
+    state.outfits = data.outfits || [];
+    renderOutfits();
+  } catch (e) {
+    setText(els.outfitsError, "Не удалось загрузить образы");
+  }
+}
+
+async function renderOutfits() {
+  if (!els.outfitsList) return;
+  els.outfitsList.innerHTML = "";
+
+  const outfits = state.outfits || [];
+  if (outfits.length === 0) {
+    const div = document.createElement("div");
+    div.className = "muted";
+    div.style.gridColumn = "1 / -1";
+    div.style.textAlign = "center";
+    div.style.padding = "2rem";
+    div.textContent = "Пока нет сохранённых образов. Создай первый на главной!";
+    els.outfitsList.appendChild(div);
+    return;
+  }
+
+  // Создадим карточки для каждого образа
+  for (const outfit of outfits) {
+    const card = document.createElement("div");
+    card.className = "wardrobe-item";
+    card.style.padding = "1rem";
+    card.style.flexDirection = "column";
+    card.style.gap = "0.75rem";
+    card.style.background = "var(--card)";
+    card.style.borderRadius = "var(--radius-lg)";
+    card.style.boxShadow = "var(--shadow-md)";
+
+    // Заголовок
+    const header = document.createElement("div");
+    header.style.display = "flex";
+    header.style.justifyContent = "space-between";
+    header.style.alignItems = "flex-start";
+    header.style.gap = "0.5rem";
+
+    const title = document.createElement("div");
+    title.className = "wardrobe-item__name";
+    title.textContent = outfit.name || "Без названия";
+    if (outfit.userFeedback === 1) {
+      title.textContent += " ❤️";
+    } else if (outfit.userFeedback === -1) {
+      title.textContent += " 👎";
+    }
+
+    const deleteBtn = document.createElement("button");
+    deleteBtn.className = "btn btn--ghost";
+    deleteBtn.style.padding = "0.5rem";
+    deleteBtn.innerHTML = `<svg class="icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M3 6h18"/><path d="M8 6V4h8v2"/><path d="M6 6l1 16h10l1-16"/></svg>`;
+    deleteBtn.addEventListener("click", async (e) => {
+      e.stopPropagation();
+      try {
+        const resp = await apiFetch(`/api/outfits/${outfit.id}`, { method: "DELETE" });
+        if (resp.ok) await loadOutfits();
+      } catch {
+        setText(els.outfitsError, "Не удалось удалить образ");
+      }
+    });
+
+    header.appendChild(title);
+    header.appendChild(deleteBtn);
+    card.appendChild(header);
+
+    // Детали (дата, погода, повод)
+    const meta = document.createElement("div");
+    meta.className = "wardrobe-item__meta";
+    const metaParts = [];
+    if (outfit.wornDate) {
+      const d = new Date(outfit.wornDate);
+      metaParts.push(d.toLocaleDateString());
+    }
+    if (outfit.weatherCondition) metaParts.push(outfit.weatherCondition);
+    if (outfit.occasion) metaParts.push(outfit.occasion);
+    meta.textContent = metaParts.join(" · ");
+    card.appendChild(meta);
+
+    // Превью вещей
+    const itemsPreview = document.createElement("div");
+    itemsPreview.style.display = "flex";
+    itemsPreview.style.flexWrap = "wrap";
+    itemsPreview.style.gap = "0.5rem";
+    itemsPreview.style.marginTop = "0.5rem";
+
+    // Получим вещи из state.wardrobeItems, если они есть
+    const itemIds = Array.isArray(outfit.items) ? outfit.items : [];
+    for (let i = 0; i < Math.min(itemIds.length, 4); i++) {
+      const id = itemIds[i];
+      const item = state.wardrobeItems?.find((x) => x.id === id);
+      const img = document.createElement("img");
+      img.style.width = "3rem";
+      img.style.height = "3rem";
+      img.style.objectFit = "contain";
+      img.style.background = "var(--card2)";
+      img.style.borderRadius = "0.5rem";
+      if (item?.photoUrl) {
+        img.src = item.photoUrl;
+        img.alt = item.name || "";
+      } else {
+        img.alt = "Вещь без фото";
+        img.src = "";
+      }
+      itemsPreview.appendChild(img);
+    }
+    card.appendChild(itemsPreview);
+
+    // Кнопки действий
+    const actions = document.createElement("div");
+    actions.style.display = "flex";
+    actions.style.gap = "0.5rem";
+    actions.style.marginTop = "0.5rem";
+
+    const applyBtn = document.createElement("button");
+    applyBtn.className = "btn";
+    applyBtn.style.flex = "1";
+    applyBtn.textContent = "Примерить";
+    applyBtn.addEventListener("click", () => {
+      setAvatarSelection(itemIds);
+      setScreen("avatar");
+    });
+
+    actions.appendChild(applyBtn);
+    card.appendChild(actions);
+
+    // Клик по карточке — тоже применить
+    card.addEventListener("click", () => {
+      setAvatarSelection(itemIds);
+      setScreen("avatar");
+    });
+
+    els.outfitsList.appendChild(card);
+  }
+}
+
 async function loadWeather(lat, lng) {
   setText(els.weatherError, "");
   setText(els.weatherOut, "");
@@ -2542,6 +2696,26 @@ if (els.avatarStage) {
       renderAvatar().catch(() => {});
     }
   });
+}
+
+if (els.refreshOutfitsBtn) {
+  els.refreshOutfitsBtn.addEventListener("click", () => loadOutfits().catch(() => {}));
+}
+
+if (els.homeApplyOutfitBtn) {
+  els.homeApplyOutfitBtn.addEventListener("click", () => {
+    const items = state.lastSuggestion?.items ?? [];
+    if (!Array.isArray(items) || items.length === 0) {
+      setText(els.homeError, "Сначала подбери образ.");
+      return;
+    }
+    setAvatarSelection(items.map((i) => i.id));
+    setScreen("avatar");
+  });
+}
+
+if (els.homeLikeOutfitBtn) {
+  els.homeLikeOutfitBtn.addEventListener("click", () => submitFeedback("like").catch((e) => setText(els.homeError, e?.message ?? String(e))));
 }
 
 if (els.avatarClearBtn) {

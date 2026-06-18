@@ -4,7 +4,7 @@
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <title>Wardrobe AI</title>
-    <link rel="stylesheet" href="/app/style.css?v=22" />
+    <link rel="stylesheet" href="/app/style.css?v=23" />
   </head>
   <body>
     <div class="app">
@@ -196,6 +196,23 @@
                     <span class="tile__label"><span>Аксессуары</span><span class="tile__sub">детали</span></span>
                   </button>
                 </div>
+              </div>
+            </section>
+
+            <section class="screen" id="screenOutfits">
+              <div class="card card--inner">
+                <div class="row row--space">
+                  <h3>Сохранённые образы</h3>
+                  <button class="btn btn--ghost" id="refreshOutfitsBtn" type="button">
+                    <svg class="icon" viewBox="0 0 24 24" aria-hidden="true">
+                      <path d="M20 12a8 8 0 1 1-2.3-5.7" />
+                      <path d="M20 4v6h-6" />
+                    </svg>
+                    <span>Обновить</span>
+                  </button>
+                </div>
+                <div class="grid grid--wardrobe" id="outfitsList"></div>
+                <div class="error" id="outfitsError"></div>
               </div>
             </section>
 
@@ -407,6 +424,12 @@
               </svg>
               <span class="nav__label">Аватар</span>
             </button>
+            <button class="nav__btn" data-screen="outfits" type="button">
+              <svg class="icon" viewBox="0 0 24 24" aria-hidden="true">
+                <path d="M4 7h16M4 12h16M4 17h16" />
+              </svg>
+              <span class="nav__label">Образы</span>
+            </button>
             <button class="nav__btn" data-screen="assistant" type="button">
               <svg class="icon" viewBox="0 0 24 24" aria-hidden="true">
                 <path d="M12 3l1.2 3.8L17 8l-3.8 1.2L12 13l-1.2-3.8L7 8l3.8-1.2L12 3z" />
@@ -577,6 +600,6 @@
       </main>
     </div>
 
-    <script type="module" src="/app/app.js?v=22"></script>
+    <script type="module" src="/app/app.js?v=23"></script>
   </body>
 </html>
