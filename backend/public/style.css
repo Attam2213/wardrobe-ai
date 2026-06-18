@@ -85,7 +85,15 @@ h3 {
     border-radius: 0;
     box-shadow: none;
     border: none;
-    padding: 20px;
+    padding: 16px;
+  }
+
+  h2 {
+    font-size: 20px;
+  }
+
+  h3 {
+    font-size: 16px;
   }
 }
 
@@ -254,11 +262,15 @@ h3 {
   }
 
   .topbar {
-    padding: 20px 20px 16px;
+    padding: 18px 16px 14px;
+  }
+
+  .topbar__name {
+    font-size: 20px;
   }
 
   .content {
-    padding: 20px;
+    padding: 16px;
     padding-bottom: 110px;
     gap: 16px;
   }
@@ -300,19 +312,23 @@ h3 {
   background: transparent;
   color: var(--muted);
   border-radius: 16px;
-  padding: 12px 8px;
+  padding: 14px 10px;
   font-size: 12px;
   font-weight: 600;
   display: flex;
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  gap: 6px;
-  transition: all 0.2s ease;
+  gap: 8px;
+  transition: all 0.15s ease;
 }
 
 .nav__btn:hover {
   background: var(--card2);
+}
+
+.nav__btn:active {
+  transform: scale(0.97);
 }
 
 .nav__btn--active {
@@ -321,8 +337,8 @@ h3 {
 }
 
 .icon {
-  width: 18px;
-  height: 18px;
+  width: 22px;
+  height: 22px;
   stroke: currentColor;
   stroke-width: 2;
   fill: none;
@@ -332,6 +348,14 @@ h3 {
 
 .nav__label {
   line-height: 1;
+}
+
+/* Мобильные стили для иконок */
+@media (max-width: 768px) {
+  .icon {
+    width: 24px;
+    height: 24px;
+  }
 }
 
 @media (max-width: 420px) {
@@ -438,31 +462,32 @@ h3 {
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 10px;
-  padding: 18px 12px;
+  gap: 12px;
+  padding: 20px 10px;
   border: none;
-  border-radius: 18px;
+  border-radius: 20px;
   background: var(--card2);
   color: var(--text);
   font-size: 13px;
   font-weight: 600;
   cursor: pointer;
-  transition: all 0.2s ease;
+  transition: all 0.15s ease;
   text-decoration: none;
+  min-height: 100px;
 }
 
 .quick-action:hover {
   background: var(--accent-light);
-  transform: translateY(-2px);
 }
 
 .quick-action:active {
-  transform: translateY(0);
+  transform: scale(0.97);
+  background: var(--accent-light);
 }
 
 .quick-action__icon {
-  width: 28px;
-  height: 28px;
+  width: 32px;
+  height: 32px;
   stroke-width: 2;
   stroke: currentColor;
   color: var(--accent);
@@ -470,6 +495,18 @@ h3 {
 
 .quick-action__label {
   text-align: center;
+  line-height: 1.2;
+}
+
+/* Мобильные адаптации для новых элементов */
+@media (max-width: 768px) {
+  .quick-actions {
+    gap: 10px;
+  }
+
+  .quick-action {
+    padding: 18px 8px;
+  }
 }
 
 /* Хедер секции */
@@ -592,12 +629,20 @@ h3 {
 @media (max-width: 768px) {
   .modal__sheet {
     border-radius: 24px 24px 0 0;
-    padding: 20px;
+    padding: 18px;
     max-height: 90vh;
   }
 
   .modal__header {
     margin-bottom: 16px;
+  }
+
+  .modal__header .btn {
+    padding: 12px 14px;
+  }
+
+  .modal__header .btn span {
+    display: none;
   }
 }
 
@@ -1067,6 +1112,30 @@ h3 {
   border-radius: 999px;
   border: none;
   font-weight: 500;
+}
+
+@media (min-width: 640px) {
+  .grid--wardrobe {
+    grid-template-columns: repeat(3, 1fr);
+  }
+}
+
+@media (max-width: 768px) {
+  .grid--wardrobe {
+    gap: 12px;
+  }
+
+  .wardrobe-item {
+    border-radius: 16px;
+  }
+
+  .wardrobe-item__info {
+    padding: 12px 12px;
+  }
+
+  .wardrobe-item__name {
+    font-size: 14px;
+  }
 }
 
 @media (min-width: 640px) {
