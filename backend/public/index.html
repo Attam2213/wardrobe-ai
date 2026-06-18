@@ -4,7 +4,7 @@
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <title>Wardrobe AI</title>
-    <link rel="stylesheet" href="/app/style.css?v=49">
+    <link rel="stylesheet" href="/app/style.css?v=50" />
   </head>
   <body>
     <div class="app">
@@ -289,16 +289,26 @@
                   </button>
                 </div>
                 <label class="field">
-                  <div class="field__label">Пол аватара</div>
-                  <select class="input" id="avatarGenderSelect">
-                    <option value="male">Мужской</option>
-                    <option value="female">Женский</option>
+                  <div class="field__label">Стиль аватара</div>
+                  <select class="input" id="avatarStyleSelect">
+                    <option value="default">Обычный</option>
+                    <option value="dress">Платье</option>
+                    <option value="casual">Спортивный</option>
+                    <option value="formal">Формальный</option>
                   </select>
                 </label>
-                <div class="avatar-3d-container" id="avatar3DContainer">
-                  <canvas id="avatar3DCanvas"></canvas>
+                <div class="avatar" id="avatarStage">
+                  <div class="avatar__base" id="avatarBase" aria-hidden="true"></div>
+                  <div class="avatar__layers" id="avatarLayers" aria-hidden="true"></div>
+                  <div class="avatar__hint">Тапни по вещи, чтобы надеть. На аватаре: тащи чтобы двигать, двумя пальцами — масштаб.</div>
+                  <div class="avatar__wear" id="avatarWear"></div>
                 </div>
-                <div class="muted">3D-примерка: вещи будут отображаться как текстуры на аватаре.</div>
+                <div class="row" id="avatarControls">
+                  <button class="btn btn--ghost" id="avatarRotateLeftBtn" type="button">Повернуть ⟲</button>
+                  <button class="btn btn--ghost" id="avatarRotateRightBtn" type="button">Повернуть ⟳</button>
+                  <button class="btn btn--ghost" id="avatarResetLayerBtn" type="button">Сброс</button>
+                </div>
+                <div class="muted">Тут 2D-примерка. Лучше всего работают фото вещей с вырезанным фоном.</div>
               </div>
 
               <div class="card card--inner">
@@ -647,6 +657,6 @@
       </main>
     </div>
 
-    <script type="module" src="/app/app.js?v=49"></script>
+    <script type="module" src="/app/app.js?v=50"></script>
   </body>
 </html>
