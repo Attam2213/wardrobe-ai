@@ -4,7 +4,7 @@
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <title>Wardrobe AI</title>
-    <link rel="stylesheet" href="/app/style.css?v=24" />
+    <link rel="stylesheet" href="/app/style.css?v=25" />
   </head>
   <body>
     <div class="app">
@@ -263,7 +263,16 @@
 
             <section class="screen" id="screenAvatar">
               <div class="card card--inner">
-                <h3>Аватар</h3>
+                <div class="row row--space">
+                  <h3>Аватар</h3>
+                  <button class="btn" id="avatarSaveOutfitBtn" type="button">
+                    <svg class="icon" viewBox="0 0 24 24" aria-hidden="true">
+                      <path d="M12 21s7-5 7-11a7 7 0 0 0-14 0c0 6 7 11 7 11z" />
+                      <path d="M12 10a2 2 0 1 0 0.001 0z" />
+                    </svg>
+                    <span>Сохранить образ</span>
+                  </button>
+                </div>
                 <div class="avatar" id="avatarStage">
                   <div class="avatar__base" aria-hidden="true"></div>
                   <div class="avatar__layers" id="avatarLayers" aria-hidden="true"></div>
@@ -616,6 +625,6 @@
       </main>
     </div>
 
-    <script type="module" src="/app/app.js?v=24"></script>
+    <script type="module" src="/app/app.js?v=25"></script>
   </body>
 </html>

@@ -45,6 +45,9 @@ const els = {
   itemsList: document.getElementById("itemsList"),
   itemError: document.getElementById("itemError"),
 
+  // Avatar screen
+  avatarSaveOutfitBtn: document.getElementById("avatarSaveOutfitBtn"),
+
   // Quick actions
   quickAddItem: document.getElementById("quickAddItem"),
   quickSuggestOutfit: document.getElementById("quickSuggestOutfit"),
@@ -2773,6 +2776,35 @@ if (els.avatarResetLayerBtn) {
     const t = item ? defaultAvatarTransformForItem(item) : { x: 0, y: 0, s: 1, r: 0 };
     saveAvatarTransform(id, t);
     renderAvatar().catch(() => {});
+  });
+}
+
+if (els.avatarSaveOutfitBtn) {
+  els.avatarSaveOutfitBtn.addEventListener("click", async () => {
+    const selectedIds = Array.from(state.avatarSelectedIds);
+    if (selectedIds.length === 0) {
+      alert("Сначала выберите вещи для образа!");
+      return;
+    }
+    try {
+      const resp = await apiFetch("/api/outfits", {
+        method: "POST",
+        body: {
+          name: "Мой образ",
+          itemIds: selectedIds,
+          wornDate: new Date().toISOString(),
+        },
+      });
+      if (!resp.ok) {
+        const errorText = await resp.text();
+        alert(`Ошибка сохранения образа: ${errorText}`);
+        return;
+      }
+      alert("Образ сохранён!");
+      setScreen("outfits");
+    } catch (err) {
+      alert(`Ошибка сохранения образа: ${err?.message ?? String(err)}`);
+    }
   });
 }
 
