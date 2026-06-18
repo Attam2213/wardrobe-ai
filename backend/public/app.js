@@ -1606,6 +1606,68 @@ async function onAuthSubmit(e) {
   await enterApp();
 }
 
+function getWeatherIconSvg(condition) {
+  const c = (condition || "").toLowerCase();
+  if (c.includes("rain") || c.includes("дождь")) {
+    return `<svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+      <path d="M16 13v8" />
+      <path d="M8 13v8" />
+      <path d="M12 15v8" />
+      <path d="M20 16.58A5 5 0 0 0 18 7h-1.26A8 8 0 1 0 4 15.25" />
+    </svg>`;
+  }
+  if (c.includes("cloud") || c.includes("облач")) {
+    return `<svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+      <path d="M17.5 19H9a7 7 0 1 1 6.71-9h1.79a4.5 4.5 0 1 1 0 9Z" />
+    </svg>`;
+  }
+  if (c.includes("snow") || c.includes("снег")) {
+    return `<svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+      <path d="M12 2v22" />
+      <path d="M4.93 4.93l14.14 14.14" />
+      <path d="M19.07 4.93L4.93 19.07" />
+      <path d="M2 12h20" />
+      <path d="M8 6v2a2 2 0 0 1-2 2H4" />
+      <path d="M16 6v2a2 2 0 0 0 2 2h2" />
+      <path d="M8 16v2a2 2 0 0 0 2 2h2" />
+      <path d="M16 16v2a2 2 0 0 1 2 2h2" />
+    </svg>`;
+  }
+  // По умолчанию солнце
+  return `<svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+    <path d="M12 2v4" />
+    <path d="M12 18v4" />
+    <path d="M4.93 4.93l2.83 2.83" />
+    <path d="M16.24 16.24l2.83 2.83" />
+    <path d="M2 12h4" />
+    <path d="M18 12h4" />
+    <path d="M4.93 19.07l2.83-2.83" />
+    <path d="M16.24 7.76l2.83-2.83" />
+    <path d="M12 8a4 4 0 1 0 0 8 4 4 0 0 0 0-8z" />
+  </svg>`;
+}
+
+async function renderHomeWeather() {
+  const w = state.lastWeather;
+  if (!w) return;
+
+  const tempEl = document.getElementById("homeWeatherTemp");
+  const descEl = document.getElementById("homeWeatherDesc");
+  const iconEl = document.querySelector("#homeWeatherWidget .weather-icon");
+
+  if (tempEl) setText(tempEl, `${w.temperature ?? "—"}°C`);
+  
+  let desc = w.description || w.condition || "Погода не загружена";
+  if (w.locationName) {
+    desc = `${w.locationName} · ${desc}`;
+  }
+  if (descEl) setText(descEl, desc);
+
+  if (iconEl) {
+    iconEl.innerHTML = getWeatherIconSvg(w.condition);
+  }
+}
+
 async function loadWeather(lat, lng) {
   setText(els.weatherError, "");
   setText(els.weatherOut, "");
@@ -1623,6 +1685,7 @@ async function loadWeather(lat, lng) {
   state.lastWeather = data;
   setText(els.weatherOut, formatWeatherText(data));
   await renderTopbar();
+  await renderHomeWeather();
   return data;
 }
 
@@ -2085,6 +2148,12 @@ async function enterApp() {
   await renderTopbar();
   setScreen("home");
   await renderWardrobe();
+  
+  // Автоматически загружаем погоду
+  try {
+    await loadWeather();
+    await renderHomeWeather();
+  } catch {}
 }
 
 els.tabLogin.addEventListener("click", () => setAuthMode("login"));
