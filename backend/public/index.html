@@ -4,7 +4,7 @@
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <title>Wardrobe AI</title>
-    <link rel="stylesheet" href="/app/style.css?v=25" />
+    <link rel="stylesheet" href="/app/style.css?v=26" />
   </head>
   <body>
     <div class="app">
@@ -255,6 +255,21 @@
                       <option value="winter">Зима</option>
                     </select>
                   </label>
+                  <label class="field" style="flex:1">
+                    <div class="field__label">Фильтр по цвету</div>
+                    <select class="input" id="filterColor">
+                      <option value="">Любой</option>
+                      <option value="белый">Белый</option>
+                      <option value="чёрный">Чёрный</option>
+                      <option value="синий">Синий</option>
+                      <option value="красный">Красный</option>
+                      <option value="зелёный">Зелёный</option>
+                      <option value="жёлтый">Жёлтый</option>
+                      <option value="бежевый">Бежевый</option>
+                      <option value="серый">Серый</option>
+                      <option value="розовый">Розовый</option>
+                    </select>
+                  </label>
                 </div>
                 <div class="grid grid--wardrobe" id="itemsList"></div>
                 <div class="error" id="itemError"></div>
@@ -273,8 +288,17 @@
                     <span>Сохранить образ</span>
                   </button>
                 </div>
+                <label class="field">
+                  <div class="field__label">Стиль аватара</div>
+                  <select class="input" id="avatarStyleSelect">
+                    <option value="default">Обычный</option>
+                    <option value="dress">Платье</option>
+                    <option value="casual">Спортивный</option>
+                    <option value="formal">Формальный</option>
+                  </select>
+                </label>
                 <div class="avatar" id="avatarStage">
-                  <div class="avatar__base" aria-hidden="true"></div>
+                  <div class="avatar__base" id="avatarBase" aria-hidden="true"></div>
                   <div class="avatar__layers" id="avatarLayers" aria-hidden="true"></div>
                   <div class="avatar__hint">Тапни по вещи, чтобы надеть. На аватаре: тащи чтобы двигать, двумя пальцами — масштаб.</div>
                   <div class="avatar__wear" id="avatarWear"></div>
@@ -625,6 +649,6 @@
       </main>
     </div>
 
-    <script type="module" src="/app/app.js?v=25"></script>
+    <script type="module" src="/app/app.js?v=26"></script>
   </body>
 </html>

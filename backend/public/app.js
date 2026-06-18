@@ -42,11 +42,13 @@ const els = {
   searchInput: document.getElementById("searchInput"),
   filterType: document.getElementById("filterType"),
   filterSeason: document.getElementById("filterSeason"),
+  filterColor: document.getElementById("filterColor"),
   itemsList: document.getElementById("itemsList"),
   itemError: document.getElementById("itemError"),
 
   // Avatar screen
   avatarSaveOutfitBtn: document.getElementById("avatarSaveOutfitBtn"),
+  avatarStyleSelect: document.getElementById("avatarStyleSelect"),
 
   // Quick actions
   quickAddItem: document.getElementById("quickAddItem"),
@@ -415,14 +417,34 @@ async function loadShoppingList({ temperature, condition, occasion }) {
 function applyFilter(items) {
   const type = String(els.filterType?.value ?? "").trim();
   const season = String(els.filterSeason?.value ?? "").trim();
+  const color = String(els.filterColor?.value ?? "").trim();
   const search = String(els.searchInput?.value ?? "").trim().toLowerCase();
   
   return items.filter((item) => {
     if (type && item.type !== type) return false;
     if (season && item.season !== season) return false;
+    if (color && item.color !== color) return false;
     if (search && !String(item.name ?? "").toLowerCase().includes(search)) return false;
     return true;
   });
+}
+
+// Функции для работы с стилем аватара
+function getAvatarStyle() {
+  return String(storage.avatarStyle || "default").trim();
+}
+
+function setAvatarStyle(style) {
+  storage.avatarStyle = style;
+  const avatarBase = document.getElementById("avatarBase");
+  if (avatarBase) avatarBase.setAttribute("data-style", style);
+}
+
+function applyAvatarStyle() {
+  const style = getAvatarStyle();
+  const avatarBase = document.getElementById("avatarBase");
+  if (avatarBase) avatarBase.setAttribute("data-style", style);
+  if (els.avatarStyleSelect) els.avatarStyleSelect.value = style;
 }
 
 function toTitleWord(s) {
@@ -1428,6 +1450,7 @@ function setAddStep(step) {
 }
 
 function openAddModal({ prefillType } = {}) {
+  state.editingItem = null;
   setText(els.addModalError, "");
   if (!els.addModal) return;
   els.addModal.classList.remove("modal--hidden");
@@ -1463,7 +1486,54 @@ function openAddModal({ prefillType } = {}) {
   if (materialInput) materialInput.value = "";
   if (nameInput) nameInput.value = "";
 
+  // Обновляем заголовок модалки
+  const modalTitle = document.getElementById("addModalTitle");
+  if (modalTitle) modalTitle.textContent = "Новая вещь";
+
   setAddStep("photo");
+}
+
+function openEditModal(item) {
+  state.editingItem = item;
+  setText(els.addModalError, "");
+  if (!els.addModal) return;
+  els.addModal.classList.remove("modal--hidden");
+  document.body.style.overflow = "hidden";
+
+  state.addPhotoFile = null;
+  state.addDetectNonce += 1;
+  if (els.addPhotoInput) els.addPhotoInput.value = "";
+  if (els.addPhotoPreview) els.addPhotoPreview.src = item.photoUrl || "";
+  setAddPhotoPreviewUrl(item.photoUrl || null);
+  els.addPhotoPreviewWrap?.classList.toggle("preview--show", !!item.photoUrl);
+  setText(els.addAutoColor, "");
+  setText(els.addCropHint, "Обведи вокруг вещи рамкой — я вырежу её без фона.");
+  setText(els.addCutoutStatus, "");
+  resetAddCropSelection();
+
+  const typeSelect = els.itemForm?.querySelector('select[name="type"]');
+  const colorInput = els.itemForm?.querySelector('input[name="color"]');
+  const brandInput = els.itemForm?.querySelector('input[name="brand"]');
+  const materialInput = els.itemForm?.querySelector('input[name="material"]');
+  const seasonSelect = els.itemForm?.querySelector('select[name="season"]');
+  const warmthSelect = els.itemForm?.querySelector('select[name="warmth"]');
+  const styleSelect = els.itemForm?.querySelector('select[name="style"]');
+  const nameInput = els.itemForm?.querySelector('input[name="name"]');
+
+  if (typeSelect) typeSelect.value = item.type || "";
+  if (colorInput) colorInput.value = item.color || "";
+  if (seasonSelect) seasonSelect.value = item.season || "";
+  if (warmthSelect) warmthSelect.value = item.warmth?.toString() || "";
+  if (styleSelect) styleSelect.value = item.style || "";
+  if (brandInput) brandInput.value = item.brand || "";
+  if (materialInput) materialInput.value = item.material || "";
+  if (nameInput) nameInput.value = item.name || "";
+
+  // Обновляем заголовок модалки
+  const modalTitle = document.getElementById("addModalTitle");
+  if (modalTitle) modalTitle.textContent = "Редактировать вещь";
+
+  setAddStep("details");
 }
 
 function closeAddModal() {
@@ -1545,15 +1615,61 @@ async function renderWardrobe() {
     info.appendChild(name);
     info.appendChild(meta);
 
-    // Клик для добавления на аватар
-    div.addEventListener("click", async () => {
+    // Кнопки действий (редактировать и удалить)
+    const actions = document.createElement("div");
+    actions.className = "wardrobe-item__actions";
+    actions.style.marginTop = "auto";
+    actions.style.display = "flex";
+    actions.style.gap = "8px";
+    actions.style.flexWrap = "wrap";
+
+    // Кнопка добавить на аватар
+    const addBtn = document.createElement("button");
+    addBtn.className = "btn btn--ghost";
+    addBtn.textContent = "Примерить";
+    addBtn.addEventListener("click", async (e) => {
+      e.stopPropagation();
       state.avatarSelectedIds.add(item.id);
       await renderAvatar();
       setScreen("avatar");
     });
 
+    // Кнопка редактировать
+    const editBtn = document.createElement("button");
+    editBtn.className = "btn btn--ghost";
+    editBtn.textContent = "Редактировать";
+    editBtn.addEventListener("click", (e) => {
+      e.stopPropagation();
+      openEditModal(item);
+    });
+
+    // Кнопка удалить
+    const deleteBtn = document.createElement("button");
+    deleteBtn.className = "btn btn--ghost";
+    deleteBtn.style.color = "var(--danger)";
+    deleteBtn.textContent = "Удалить";
+    deleteBtn.addEventListener("click", async (e) => {
+      e.stopPropagation();
+      if (confirm("Удалить вещь?")) {
+        try {
+          const resp = await apiFetch(`/api/wardrobe/${item.id}`, {
+            method: "DELETE",
+          });
+          if (resp.ok) await renderWardrobe();
+        } catch {
+          setText(els.itemError, "Не удалось удалить вещь");
+        }
+      }
+    });
+
+    actions.appendChild(addBtn);
+    actions.appendChild(editBtn);
+    actions.appendChild(deleteBtn);
+
+    // Добавляем всё в карточку
     div.appendChild(imageWrap);
     div.appendChild(info);
+    div.appendChild(actions);
 
     els.itemsList.appendChild(div);
   }
@@ -2353,6 +2469,7 @@ async function enterApp() {
 
   restoreAvatarSelection();
   restoreAvatarLayerTransforms();
+  applyAvatarStyle();
   await renderTopbar();
   setScreen("home");
   await renderWardrobe();
@@ -2371,9 +2488,16 @@ els.authForm.addEventListener("submit", onAuthSubmit);
 if (els.refreshBtn) els.refreshBtn.addEventListener("click", () => renderWardrobe().catch(() => {}));
 if (els.filterType) els.filterType.addEventListener("change", () => renderWardrobe().catch(() => {}));
 if (els.filterSeason) els.filterSeason.addEventListener("change", () => renderWardrobe().catch(() => {}));
+if (els.filterColor) els.filterColor.addEventListener("change", () => renderWardrobe().catch(() => {}));
 if (els.searchInput) els.searchInput.addEventListener("input", () => renderWardrobe().catch(() => {}));
 if (els.addItemBtn) {
   els.addItemBtn.addEventListener("click", () => openAddModal({ prefillType: String(els.filterType?.value ?? "").trim() }));
+}
+
+if (els.avatarStyleSelect) {
+  els.avatarStyleSelect.addEventListener("change", () => {
+    setAvatarStyle(els.avatarStyleSelect.value);
+  });
 }
 
 // Обработчик плавающей кнопки добавления
@@ -2603,21 +2727,39 @@ els.itemForm.addEventListener("submit", async (e) => {
   state.addLastWarmth = warmthRaw || null;
   state.addLastStyle = styleRaw || null;
 
-  const resp = await apiFetch("/api/wardrobe", {
-    method: "POST",
-    body: { name, type, color, brand, material, season, warmth, style },
-  });
-  if (!resp.ok) {
-    const t = await resp.text();
-    setText(els.addModalError, t);
-    setText(els.itemError, t);
-    return;
+  let item;
+  if (state.editingItem) {
+    // Редактирование вещи
+    const resp = await apiFetch(`/api/wardrobe/${state.editingItem.id}`, {
+      method: "PUT",
+      body: { name, type, color, brand, material, season, warmth, style },
+    });
+    if (!resp.ok) {
+      const t = await resp.text();
+      setText(els.addModalError, t);
+      setText(els.itemError, t);
+      return;
+    }
+    const updated = await resp.json();
+    item = updated.item;
+  } else {
+    // Добавление новой вещи
+    const resp = await apiFetch("/api/wardrobe", {
+      method: "POST",
+      body: { name, type, color, brand, material, season, warmth, style },
+    });
+    if (!resp.ok) {
+      const t = await resp.text();
+      setText(els.addModalError, t);
+      setText(els.itemError, t);
+      return;
+    }
+    const created = await resp.json();
+    item = created.item;
   }
 
-  const created = await resp.json();
-  const item = created.item;
+  // Загружаем фото, если есть
   const f = state.addPhotoFile;
-
   if (f && item?.id) {
     try {
       const imageBase64 = await new Promise((resolve, reject) => {
