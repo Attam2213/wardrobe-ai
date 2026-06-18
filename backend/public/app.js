@@ -2950,6 +2950,42 @@ if (els.avatarSaveOutfitBtn) {
   });
 }
 
+// Уведомления
+const requestNotificationBtn = document.getElementById("requestNotificationBtn");
+const testNotificationBtn = document.getElementById("testNotificationBtn");
+
+if (requestNotificationBtn) {
+  requestNotificationBtn.addEventListener("click", async () => {
+    if (!("Notification" in window)) {
+      alert("Этот браузер не поддерживает уведомления.");
+      return;
+    }
+    const permission = await Notification.requestPermission();
+    if (permission === "granted") {
+      alert("Уведомления разрешены!");
+    } else {
+      alert("Уведомления отклонены. Вы можете изменить это в настройках браузера.");
+    }
+  });
+}
+
+if (testNotificationBtn) {
+  testNotificationBtn.addEventListener("click", () => {
+    if (!("Notification" in window)) {
+      alert("Этот браузер не поддерживает уведомления.");
+      return;
+    }
+    if (Notification.permission === "granted") {
+      new Notification("Wardrobe AI", {
+        body: "Проверьте погоду и подберите образ на сегодня!",
+        icon: "/app/favicon.ico",
+      });
+    } else if (Notification.permission !== "denied") {
+      alert("Сначала разрешите уведомления.");
+    }
+  });
+}
+
 els.logoutBtn.addEventListener("click", async () => {
   storage.accessToken = null;
   storage.refreshToken = null;
