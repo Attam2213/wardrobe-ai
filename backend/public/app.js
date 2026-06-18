@@ -28,6 +28,8 @@ const els = {
   homeOutfit: document.getElementById("homeOutfit"),
   homeError: document.getElementById("homeError"),
   goWardrobeBtn: document.getElementById("goWardrobeBtn"),
+  homeApplyOutfitBtn: document.getElementById("homeApplyOutfitBtn"),
+  homeLikeOutfitBtn: document.getElementById("homeLikeOutfitBtn"),
 
   // Quick actions
   quickAddItem: document.getElementById("quickAddItem"),
@@ -1807,6 +1809,37 @@ async function renderTopbar() {
   }
 }
 
+function renderHomeOutfitPreview(items) {
+  const el = document.getElementById("homeOutfitPreview");
+  const actionsEl = document.getElementById("homeOutfitActions");
+  
+  if (!el) return;
+  
+  el.innerHTML = "";
+  
+  if (!Array.isArray(items) || items.length === 0) {
+    el.innerHTML = '<div class="muted">Нажми "Подобрать образ" — я предложу вариант</div>';
+    if (actionsEl) actionsEl.style.display = "none";
+    return;
+  }
+  
+  // Показываем кнопки действий
+  if (actionsEl) actionsEl.style.display = "flex";
+  
+  for (const item of items) {
+    const div = document.createElement("div");
+    div.className = "outfit-item";
+    
+    const img = document.createElement("img");
+    img.src = item.photoUrl || "";
+    img.alt = item.name || "";
+    img.loading = "lazy";
+    
+    div.appendChild(img);
+    el.appendChild(div);
+  }
+}
+
 async function homeSuggest() {
   setText(els.homeError, "");
   setText(els.homeMeta, "");
@@ -1837,6 +1870,7 @@ async function homeSuggest() {
   });
   if (!resp.ok) {
     setText(els.homeError, await resp.text());
+    renderHomeOutfitPreview(null);
     return;
   }
 
@@ -1845,11 +1879,13 @@ async function homeSuggest() {
   const items = data.items ?? [];
   if (items.length === 0) {
     setText(els.homeError, "Не получилось собрать образ. Добавь вещи в гардероб.");
+    renderHomeOutfitPreview(null);
     return;
   }
 
   setText(els.homeOutfit, formatOutfitText(items, data.explanation ?? ""));
   setText(els.homeMeta, `Источник: ${data.provider ?? "unknown"}`);
+  renderHomeOutfitPreview(items);
 
   try {
     const createdResp = await apiFetch("/api/outfits", {
@@ -2209,6 +2245,24 @@ if (els.homeSuggestBtn)
   els.homeSuggestBtn.addEventListener("click", () =>
     homeSuggest().catch((e) => setText(els.homeError, e?.message ?? String(e))),
   );
+
+// Обработчики кнопок на главной для образа
+if (els.homeApplyOutfitBtn) {
+  els.homeApplyOutfitBtn.addEventListener("click", () => {
+    const items = state.lastSuggestion?.items ?? [];
+    if (!Array.isArray(items) || items.length === 0) {
+      setText(els.homeError, "Сначала подбери образ.");
+      return;
+    }
+    setAvatarSelection(items.map((i) => i.id));
+    setScreen("avatar");
+  });
+}
+if (els.homeLikeOutfitBtn) {
+  els.homeLikeOutfitBtn.addEventListener("click", () => 
+    submitFeedback("like").catch((e) => setText(els.homeError, e?.message ?? String(e)))
+  );
+}
 
 if (els.addModalBackdrop) els.addModalBackdrop.addEventListener("click", closeAddModal);
 if (els.addCloseBtn) els.addCloseBtn.addEventListener("click", closeAddModal);
