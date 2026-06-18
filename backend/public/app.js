@@ -3082,68 +3082,150 @@ function createDetailedAvatar() {
   
   const isMale = currentGender === 'male';
   const skinColor = 0xfdbcb4;
+  const segments = 64; // Увеличим количество сегментов для плавности
   
   // === Голова ===
-  const headGeom = new THREE.SphereGeometry(isMale ? 0.38 : 0.34, 32, 32);
-  const headMat = new THREE.MeshStandardMaterial({ color: skinColor });
+  const headScaleX = 1;
+  const headScaleY = isMale ? 1.1 : 1;
+  const headScaleZ = 0.95;
+  const headGeom = new THREE.SphereGeometry(isMale ? 0.38 : 0.34, segments, segments);
+  const headMat = new THREE.MeshStandardMaterial({ color: skinColor, roughness: 0.5, metalness: 0.1 });
   const head = new THREE.Mesh(headGeom, headMat);
+  head.scale.set(headScaleX, headScaleY, headScaleZ);
   head.position.y = isMale ? 1.45 : 1.35;
   avatarGroup.add(head);
   
-  // Волосы (простая форма)
+  // Волосы (более плавная форма)
   const hairColor = isMale ? 0x2d1810 : 0x4a2c1f;
-  const hairGeom = new THREE.SphereGeometry(isMale ? 0.42 : 0.38, 32, 32, 0, Math.PI * 2, 0, Math.PI / 2);
-  const hairMat = new THREE.MeshStandardMaterial({ color: hairColor });
+  const hairGeom = new THREE.SphereGeometry(isMale ? 0.42 : 0.38, segments, segments, 0, Math.PI * 2, 0, Math.PI / 1.8);
+  const hairMat = new THREE.MeshStandardMaterial({ color: hairColor, roughness: 0.8 });
   const hair = new THREE.Mesh(hairGeom, hairMat);
   hair.position.y = isMale ? 1.52 : 1.42;
+  hair.scale.set(1, 0.7, 1);
   avatarGroup.add(hair);
   
-  // === Туловище ===
-  const torsoWidth = isMale ? 0.9 : 0.75;
-  const torsoHeight = isMale ? 1.2 : 1.0;
-  const torsoGeom = new THREE.BoxGeometry(torsoWidth, torsoHeight, 0.45);
+  // Глаза
+  const eyeGeom = new THREE.SphereGeometry(0.05, 16, 16);
+  const eyeWhiteMat = new THREE.MeshStandardMaterial({ color: 0xffffff });
+  const eyePupilGeom = new THREE.SphereGeometry(0.025, 16, 16);
+  const eyePupilMat = new THREE.MeshStandardMaterial({ color: 0x1a1a1a });
+  
+  [-1, 1].forEach((side, i) => {
+    // Белок глаза
+    const eyeWhite = new THREE.Mesh(eyeGeom, eyeWhiteMat);
+    eyeWhite.position.set(side * 0.12, 0.05, 0.3);
+    head.add(eyeWhite);
+    
+    // Зрачок
+    const pupil = new THREE.Mesh(eyePupilGeom, eyePupilMat);
+    pupil.position.set(0, 0, 0.035);
+    eyeWhite.add(pupil);
+  });
+  
+  // Нос
+  const noseGeom = new THREE.ConeGeometry(0.04, 0.1, 8);
+  const noseMat = new THREE.MeshStandardMaterial({ color: skinColor, roughness: 0.5 });
+  const nose = new THREE.Mesh(noseGeom, noseMat);
+  nose.rotation.x = Math.PI / 2;
+  nose.position.set(0, -0.08, 0.32);
+  head.add(nose);
+  
+  // Рот
+  const mouthGeom = new THREE.TorusGeometry(0.08, 0.015, 8, 32, Math.PI);
+  const mouthMat = new THREE.MeshStandardMaterial({ color: 0xc4456a, roughness: 0.7 });
+  const mouth = new THREE.Mesh(mouthGeom, mouthMat);
+  mouth.rotation.x = Math.PI;
+  mouth.position.set(0, -0.2, 0.3);
+  head.add(mouth);
+  
+  // === Шея ===
+  const neckGeom = new THREE.CylinderGeometry(0.12, 0.15, 0.2, segments);
+  const neckMat = new THREE.MeshStandardMaterial({ color: skinColor, roughness: 0.5 });
+  const neck = new THREE.Mesh(neckGeom, neckMat);
+  neck.position.y = isMale ? 1.15 : 1.05;
+  avatarGroup.add(neck);
+  
+  // === Туловище (более плавное) ===
+  const torsoTopWidth = isMale ? 0.55 : 0.45;
+  const torsoBottomWidth = isMale ? 0.5 : 0.55;
+  const torsoHeight = isMale ? 0.9 : 0.75;
+  const torsoGeom = new THREE.CylinderGeometry(torsoBottomWidth, torsoTopWidth, torsoHeight, segments);
   const torsoColor = isMale ? 0x3b82f6 : 0xec4899;
-  const torsoMat = new THREE.MeshStandardMaterial({ color: torsoColor });
+  const torsoMat = new THREE.MeshStandardMaterial({ color: torsoColor, roughness: 0.6 });
   const torso = new THREE.Mesh(torsoGeom, torsoMat);
-  torso.position.y = isMale ? 0.55 : 0.45;
+  torso.position.y = isMale ? 0.6 : 0.5;
   avatarGroup.add(torso);
   
-  // === Руки ===
-  const armLength = isMale ? 0.9 : 0.75;
-  const armGeom = new THREE.CapsuleGeometry(0.12, armLength - 0.24, 8, 16);
+  // Плечи
+  const shoulderGeom = new THREE.SphereGeometry(0.18, segments, segments);
+  const shoulderMat = new THREE.MeshStandardMaterial({ color: torsoColor, roughness: 0.6 });
   
-  const leftArm = new THREE.Mesh(armGeom, new THREE.MeshStandardMaterial({ color: skinColor }));
-  leftArm.position.set(-(torsoWidth / 2 + 0.15), isMale ? 0.65 : 0.55, 0);
-  leftArm.rotation.z = 0.15;
-  avatarGroup.add(leftArm);
+  [-1, 1].forEach(side => {
+    const shoulder = new THREE.Mesh(shoulderGeom, shoulderMat);
+    shoulder.position.set(side * (isMale ? 0.55 : 0.45), torso.position.y + torsoHeight / 2 - 0.05, 0);
+    avatarGroup.add(shoulder);
+  });
   
-  const rightArm = new THREE.Mesh(armGeom, new THREE.MeshStandardMaterial({ color: skinColor }));
-  rightArm.position.set(torsoWidth / 2 + 0.15, isMale ? 0.65 : 0.55, 0);
-  rightArm.rotation.z = -0.15;
-  avatarGroup.add(rightArm);
+  // === Руки (более плавные, с разделением на плечо-локоть-руку) ===
+  const upperArmLength = isMale ? 0.4 : 0.33;
+  const lowerArmLength = isMale ? 0.38 : 0.32;
+  const upperArmGeom = new THREE.CapsuleGeometry(0.11, upperArmLength, 8, segments);
+  const lowerArmGeom = new THREE.CapsuleGeometry(0.09, lowerArmLength, 8, segments);
+  const armMat = new THREE.MeshStandardMaterial({ color: skinColor, roughness: 0.5 });
   
-  // === Ноги ===
-  const legLength = isMale ? 1.1 : 0.95;
-  const legGeom = new THREE.CapsuleGeometry(isMale ? 0.15 : 0.13, legLength - 0.3, 8, 16);
-  const legMat = new THREE.MeshStandardMaterial({ color: 0x2d3748 });
+  [-1, 1].forEach(side => {
+    // Плечо (верхняя часть руки)
+    const upperArm = new THREE.Mesh(upperArmGeom, armMat);
+    upperArm.position.set(side * (isMale ? 0.6 : 0.5), torso.position.y + torsoHeight / 2 - 0.15, 0);
+    upperArm.rotation.z = side * 0.2;
+    upperArm.rotation.x = 0.1;
+    avatarGroup.add(upperArm);
+    
+    // Предплечье (нижняя часть руки)
+    const lowerArm = new THREE.Mesh(lowerArmGeom, armMat);
+    lowerArm.position.set(side * (isMale ? 0.8 : 0.65), torso.position.y + torsoHeight / 2 - upperArmLength - 0.1, 0);
+    lowerArm.rotation.z = side * 0.1;
+    avatarGroup.add(lowerArm);
+    
+    // Кисть
+    const handGeom = new THREE.SphereGeometry(0.08, segments, segments);
+    const hand = new THREE.Mesh(handGeom, armMat);
+    hand.position.set(side * (isMale ? 0.95 : 0.78), torso.position.y + torsoHeight / 2 - upperArmLength - lowerArmLength - 0.08, 0);
+    avatarGroup.add(hand);
+  });
   
-  const leftLeg = new THREE.Mesh(legGeom, legMat);
-  leftLeg.position.set(-0.2, isMale ? -0.35 : -0.4, 0);
-  avatarGroup.add(leftLeg);
+  // === Таз ===
+  const pelvisGeom = new THREE.CylinderGeometry(isMale ? 0.45 : 0.5, isMale ? 0.48 : 0.55, 0.25, segments);
+  const pelvisMat = new THREE.MeshStandardMaterial({ color: 0x2d3748, roughness: 0.7 });
+  const pelvis = new THREE.Mesh(pelvisGeom, pelvisMat);
+  pelvis.position.y = isMale ? 0.05 : -0.05;
+  avatarGroup.add(pelvis);
   
-  const rightLeg = new THREE.Mesh(legGeom, legMat);
-  rightLeg.position.set(0.2, isMale ? -0.35 : -0.4, 0);
-  avatarGroup.add(rightLeg);
+  // === Ноги (более плавные, с разделением на бедро-колено- голень) ===
+  const upperLegLength = isMale ? 0.55 : 0.48;
+  const lowerLegLength = isMale ? 0.5 : 0.43;
+  const upperLegGeom = new THREE.CapsuleGeometry(isMale ? 0.14 : 0.12, upperLegLength, 8, segments);
+  const lowerLegGeom = new THREE.CapsuleGeometry(isMale ? 0.12 : 0.1, lowerLegLength, 8, segments);
+  const legMat = new THREE.MeshStandardMaterial({ color: 0x2d3748, roughness: 0.7 });
   
-  // === Бедра (для женской фигуры) ===
-  if (!isMale) {
-    const hipsGeom = new THREE.SphereGeometry(0.45, 32, 32, 0, Math.PI * 2, 0, Math.PI / 2);
-    const hipsMat = new THREE.MeshStandardMaterial({ color: 0x9333ea });
-    const hips = new THREE.Mesh(hipsGeom, hipsMat);
-    hips.position.set(0, -0.1, 0);
-    hips.rotation.x = Math.PI;
-    avatarGroup.add(hips);
-  }
+  [-0.18, 0.18].forEach((xPos, i) => {
+    // Бедро
+    const upperLeg = new THREE.Mesh(upperLegGeom, legMat);
+    upperLeg.position.set(xPos, pelvis.position.y - upperLegLength / 2 - 0.1, 0);
+    avatarGroup.add(upperLeg);
+    
+    // Голень
+    const lowerLeg = new THREE.Mesh(lowerLegGeom, legMat);
+    lowerLeg.position.set(xPos, pelvis.position.y - upperLegLength - lowerLegLength / 2 - 0.1, 0);
+    avatarGroup.add(lowerLeg);
+    
+    // Стопа
+    const footGeom = new THREE.BoxGeometry(0.1, 0.08, 0.25);
+    const footMat = new THREE.MeshStandardMaterial({ color: 0x1a1a1a, roughness: 0.8 });
+    const foot = new THREE.Mesh(footGeom, footMat);
+    foot.position.set(xPos, pelvis.position.y - upperLegLength - lowerLegLength - 0.1, 0.08);
+    avatarGroup.add(foot);
+  });
 }
 
 function updateAvatarGender(gender) {
