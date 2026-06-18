@@ -748,42 +748,97 @@ h3 {
 /* Стили для разных вариантов базового аватара */
 .avatar__base[data-style="default"] {
   background:
-    radial-gradient(circle at 50% 16%, rgba(15, 23, 42, 0.9) 0 18%, transparent 19% 100%),
-    radial-gradient(closest-side at 50% 42%, rgba(15, 23, 42, 0.9) 0 52%, transparent 53% 100%),
-    radial-gradient(closest-side at 22% 44%, rgba(15, 23, 42, 0.9) 0 18%, transparent 19% 100%),
-    radial-gradient(closest-side at 78% 44%, rgba(15, 23, 42, 0.9) 0 18%, transparent 19% 100%),
-    radial-gradient(closest-side at 42% 86%, rgba(15, 23, 42, 0.9) 0 22%, transparent 23% 100%),
-    radial-gradient(closest-side at 58% 86%, rgba(15, 23, 42, 0.9) 0 22%, transparent 23% 100%);
+    /* Волосы */
+    radial-gradient(ellipse at 50% 10%, rgba(30, 30, 30, 0.85) 0 10%, transparent 10.5% 100%),
+    /* Голова */
+    radial-gradient(circle at 50% 15%, rgba(121, 85, 72, 0.85) 0 11%, transparent 11.5% 100%),
+    /* Шея */
+    radial-gradient(ellipse at 50% 28%, rgba(121, 85, 72, 0.85) 0 3%, transparent 3.5% 100%),
+    /* Туловище (шире у плеч) */
+    radial-gradient(ellipse at 50% 45%, rgba(59, 130, 246, 0.85) 0 18%, transparent 18.5% 100%),
+    /* Таз */
+    radial-gradient(ellipse at 50% 60%, rgba(30, 41, 59, 0.85) 0 10%, transparent 10.5% 100%),
+    /* Левая рука (верхняя часть) */
+    radial-gradient(ellipse at 20% 40%, rgba(121, 85, 72, 0.85) 0 10%, transparent 10.5% 100%),
+    /* Правая рука (верхняя часть) */
+    radial-gradient(ellipse at 80% 40%, rgba(121, 85, 72, 0.85) 0 10%, transparent 10.5% 100%),
+    /* Левая рука (нижняя часть) */
+    radial-gradient(ellipse at 18% 55%, rgba(121, 85, 72, 0.85) 0 8%, transparent 8.5% 100%),
+    /* Правая рука (нижняя часть) */
+    radial-gradient(ellipse at 82% 55%, rgba(121, 85, 72, 0.85) 0 8%, transparent 8.5% 100%),
+    /* Левая нога (верхняя часть) */
+    radial-gradient(ellipse at 40% 75%, rgba(30, 41, 59, 0.85) 0 12%, transparent 12.5% 100%),
+    /* Правая нога (верхняя часть) */
+    radial-gradient(ellipse at 60% 75%, rgba(30, 41, 59, 0.85) 0 12%, transparent 12.5% 100%),
+    /* Левая нога (нижняя часть) */
+    radial-gradient(ellipse at 40% 88%, rgba(30, 41, 59, 0.85) 0 10%, transparent 10.5% 100%),
+    /* Правая нога (нижняя часть) */
+    radial-gradient(ellipse at 60% 88%, rgba(30, 41, 59, 0.85) 0 10%, transparent 10.5% 100%);
 }
 
 .avatar__base[data-style="dress"] {
   background:
-    radial-gradient(circle at 50% 16%, rgba(15, 23, 42, 0.9) 0 18%, transparent 19% 100%),
-    radial-gradient(ellipse at 50% 40%, rgba(15, 23, 42, 0.9) 0 35%, transparent 36% 100%),
-    radial-gradient(ellipse at 50% 70%, rgba(15, 23, 42, 0.9) 0 45%, transparent 46% 100%),
-    radial-gradient(closest-side at 28% 40%, rgba(15, 23, 42, 0.9) 0 12%, transparent 13% 100%),
-    radial-gradient(closest-side at 72% 40%, rgba(15, 23, 42, 0.9) 0 12%, transparent 13% 100%);
+    /* Волосы */
+    radial-gradient(ellipse at 50% 10%, rgba(30, 30, 30, 0.85) 0 10%, transparent 10.5% 100%),
+    /* Голова */
+    radial-gradient(circle at 50% 15%, rgba(121, 85, 72, 0.85) 0 11%, transparent 11.5% 100%),
+    /* Шея */
+    radial-gradient(ellipse at 50% 28%, rgba(121, 85, 72, 0.85) 0 3%, transparent 3.5% 100%),
+    /* Платье (туловище + юбка) */
+    radial-gradient(ellipse at 50% 42%, rgba(236, 72, 153, 0.85) 0 16%, transparent 16.5% 100%),
+    radial-gradient(ellipse at 50% 65%, rgba(236, 72, 153, 0.85) 0 18%, transparent 18.5% 100%),
+    /* Левая рука */
+    radial-gradient(ellipse at 20% 45%, rgba(121, 85, 72, 0.85) 0 9%, transparent 9.5% 100%),
+    /* Правая рука */
+    radial-gradient(ellipse at 80% 45%, rgba(121, 85, 72, 0.85) 0 9%, transparent 9.5% 100%),
+    /* Левая нога */
+    radial-gradient(ellipse at 45% 85%, rgba(121, 85, 72, 0.85) 0 8%, transparent 8.5% 100%),
+    /* Правая нога */
+    radial-gradient(ellipse at 55% 85%, rgba(121, 85, 72, 0.85) 0 8%, transparent 8.5% 100%);
 }
 
 .avatar__base[data-style="casual"] {
   background:
-    radial-gradient(circle at 50% 16%, rgba(15, 23, 42, 0.9) 0 18%, transparent 19% 100%),
-    radial-gradient(ellipse at 50% 45%, rgba(15, 23, 42, 0.9) 0 30%, transparent 31% 100%),
-    radial-gradient(ellipse at 35% 80%, rgba(15, 23, 42, 0.9) 0 22%, transparent 23% 100%),
-    radial-gradient(ellipse at 65% 80%, rgba(15, 23, 42, 0.9) 0 22%, transparent 23% 100%),
-    radial-gradient(closest-side at 26% 43%, rgba(15, 23, 42, 0.9) 0 14%, transparent 15% 100%),
-    radial-gradient(closest-side at 74% 43%, rgba(15, 23, 42, 0.9) 0 14%, transparent 15% 100%);
+    /* Волосы */
+    radial-gradient(ellipse at 50% 10%, rgba(30, 30, 30, 0.85) 0 10%, transparent 10.5% 100%),
+    /* Голова */
+    radial-gradient(circle at 50% 15%, rgba(121, 85, 72, 0.85) 0 11%, transparent 11.5% 100%),
+    /* Шея */
+    radial-gradient(ellipse at 50% 28%, rgba(121, 85, 72, 0.85) 0 3%, transparent 3.5% 100%),
+    /* Футболка */
+    radial-gradient(ellipse at 50% 45%, rgba(16, 185, 129, 0.85) 0 16%, transparent 16.5% 100%),
+    /* Джинсы */
+    radial-gradient(ellipse at 50% 62%, rgba(30, 64, 175, 0.85) 0 10%, transparent 10.5% 100%),
+    /* Левая рука */
+    radial-gradient(ellipse at 18% 48%, rgba(121, 85, 72, 0.85) 0 9%, transparent 9.5% 100%),
+    /* Правая рука */
+    radial-gradient(ellipse at 82% 48%, rgba(121, 85, 72, 0.85) 0 9%, transparent 9.5% 100%),
+    /* Левая нога */
+    radial-gradient(ellipse at 40% 82%, rgba(30, 64, 175, 0.85) 0 12%, transparent 12.5% 100%),
+    /* Правая нога */
+    radial-gradient(ellipse at 60% 82%, rgba(30, 64, 175, 0.85) 0 12%, transparent 12.5% 100%);
 }
 
 .avatar__base[data-style="formal"] {
   background:
-    radial-gradient(circle at 50% 16%, rgba(15, 23, 42, 0.9) 0 18%, transparent 19% 100%),
-    radial-gradient(closest-side at 50% 28%, rgba(15, 23, 42, 0.9) 0 10%, transparent 11% 100%),
-    radial-gradient(ellipse at 50% 55%, rgba(15, 23, 42, 0.9) 0 40%, transparent 41% 100%),
-    radial-gradient(closest-side at 38% 88%, rgba(15, 23, 42, 0.9) 0 20%, transparent 21% 100%),
-    radial-gradient(closest-side at 62% 88%, rgba(15, 23, 42, 0.9) 0 20%, transparent 21% 100%),
-    radial-gradient(closest-side at 24% 48%, rgba(15, 23, 42, 0.9) 0 12%, transparent 13% 100%),
-    radial-gradient(closest-side at 76% 48%, rgba(15, 23, 42, 0.9) 0 12%, transparent 13% 100%);
+    /* Волосы */
+    radial-gradient(ellipse at 50% 10%, rgba(30, 30, 30, 0.85) 0 10%, transparent 10.5% 100%),
+    /* Голова */
+    radial-gradient(circle at 50% 15%, rgba(121, 85, 72, 0.85) 0 11%, transparent 11.5% 100%),
+    /* Шея */
+    radial-gradient(ellipse at 50% 28%, rgba(121, 85, 72, 0.85) 0 3%, transparent 3.5% 100%),
+    /* Пиджак */
+    radial-gradient(ellipse at 50% 45%, rgba(15, 23, 42, 0.85) 0 18%, transparent 18.5% 100%),
+    /* Брюки */
+    radial-gradient(ellipse at 50% 62%, rgba(15, 23, 42, 0.85) 0 10%, transparent 10.5% 100%),
+    /* Левая рука */
+    radial-gradient(ellipse at 18% 48%, rgba(121, 85, 72, 0.85) 0 9%, transparent 9.5% 100%),
+    /* Правая рука */
+    radial-gradient(ellipse at 82% 48%, rgba(121, 85, 72, 0.85) 0 9%, transparent 9.5% 100%),
+    /* Левая нога */
+    radial-gradient(ellipse at 40% 82%, rgba(15, 23, 42, 0.85) 0 12%, transparent 12.5% 100%),
+    /* Правая нога */
+    radial-gradient(ellipse at 60% 82%, rgba(15, 23, 42, 0.85) 0 12%, transparent 12.5% 100%);
 }
 
 .avatar__layers {
