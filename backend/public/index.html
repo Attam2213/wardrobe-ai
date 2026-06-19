@@ -4,7 +4,7 @@
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <title>Wardrobe AI</title>
-    <link rel="stylesheet" href="/app/style.css?v=54" />
+    <link rel="stylesheet" href="/app/style.css?v=55" />
   </head>
   <body>
     <div class="app">
@@ -534,13 +534,15 @@
                     <input class="input" id="addPhotoInput" type="file" accept="image/*" capture="environment" />
                   </label>
                   <div class="muted" id="addAutoColor"></div>
-                  <div class="muted" id="addCropHint">Обведи вокруг вещи рамкой — я вырежу её без фона.</div>
+                  <div class="muted" id="addCropHint">Тапни по фото, чтобы добавить точки — обведи ими одежду. Затем нажми «Вырезать».</div>
                   <div class="preview" id="addPhotoPreviewWrap">
                     <img id="addPhotoPreview" alt="" />
                     <canvas id="addCropCanvas" aria-hidden="true"></canvas>
+                    <canvas id="addPolygonCanvas" aria-hidden="true"></canvas>
                   </div>
                   <div class="row" id="addCropActions">
                     <button class="btn btn--ghost" id="addCropResetBtn" type="button">Сбросить</button>
+                    <button class="btn btn--ghost" id="addUndoPointBtn" type="button">Отменить точку</button>
                     <button class="btn" id="addCutoutBtn" type="button">Вырезать</button>
                   </div>
                   <div class="muted" id="addCutoutStatus"></div>
@@ -656,6 +658,6 @@
       </main>
     </div>
 
-    <script type="module" src="/app/app.js?v=54"></script>
+    <script type="module" src="/app/app.js?v=55"></script>
   </body>
 </html>

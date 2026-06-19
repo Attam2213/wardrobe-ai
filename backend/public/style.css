@@ -680,6 +680,11 @@ h3 {
   touch-action: none;
 }
 
+#addPolygonCanvas {
+  z-index: 20;
+  cursor: crosshair;
+}
+
 #addCropActions {
   display: none;
 }

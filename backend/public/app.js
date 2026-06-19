@@ -73,9 +73,11 @@ const els = {
   addCropCanvas: document.getElementById("addCropCanvas"),
   addCropActions: document.getElementById("addCropActions"),
   addCropResetBtn: document.getElementById("addCropResetBtn"),
+  addUndoPointBtn: document.getElementById("addUndoPointBtn"),
   addCutoutBtn: document.getElementById("addCutoutBtn"),
   addCutoutStatus: document.getElementById("addCutoutStatus"),
   addSkipPhotoBtn: document.getElementById("addSkipPhotoBtn"),
+  addPolygonCanvas: document.getElementById("addPolygonCanvas"),
   addNextBtn: document.getElementById("addNextBtn"),
   addBackBtn: document.getElementById("addBackBtn"),
   addSaveBtn: document.getElementById("addSaveBtn"),
@@ -151,6 +153,8 @@ const state = {
   addCropRect: null,
   addCropActive: false,
   addCropPointerId: null,
+  addPolygonPoints: [],
+  addPolygonActive: false,
 };
 
 function setText(el, text) {
@@ -698,9 +702,10 @@ function normalizeRect(r) {
 
 function syncAddCropCanvasSize() {
   const canvas = els.addCropCanvas;
+  const polygonCanvas = els.addPolygonCanvas;
   const img = els.addPhotoPreview;
   const wrap = els.addPhotoPreviewWrap;
-  if (!canvas || !img || !wrap) return;
+  if (!canvas || !polygonCanvas || !img || !wrap) return;
   const rect = wrap.getBoundingClientRect();
   if (!rect.width || !rect.height) return;
   const dpr = window.devicePixelRatio || 1;
@@ -708,10 +713,12 @@ function syncAddCropCanvasSize() {
   const h = Math.max(1, Math.round(rect.height * dpr));
   if (canvas.width !== w) canvas.width = w;
   if (canvas.height !== h) canvas.height = h;
-  redrawAddCropOverlay();
+  if (polygonCanvas.width !== w) polygonCanvas.width = w;
+  if (polygonCanvas.height !== h) polygonCanvas.height = h;
+  drawAddCropCanvas();
 }
 
-function redrawAddCropOverlay() {
+function drawAddCropCanvas() {
   const canvas = els.addCropCanvas;
   if (!canvas) return;
   const ctx = canvas.getContext("2d");
@@ -721,44 +728,167 @@ function redrawAddCropOverlay() {
   const lineW = Math.max(2, Math.round((window.devicePixelRatio || 1) * 1.25));
   const nr = normalizeRect(state.addCropRect);
   if (!nr || nr.w < 6 || nr.h < 6) {
-    if (els.addCutoutBtn) els.addCutoutBtn.disabled = true;
-    return;
+    // Не блокируем кнопку, если есть полигон
+    if (state.addPolygonPoints.length < 3 && els.addCutoutBtn) {
+      els.addCutoutBtn.disabled = true;
+    }
+  } else {
+    if (els.addCutoutBtn) els.addCutoutBtn.disabled = false;
   }
 
-  if (els.addCutoutBtn) els.addCutoutBtn.disabled = false;
-  ctx.fillStyle = "rgba(0,0,0,0.35)";
-  ctx.fillRect(0, 0, canvas.width, canvas.height);
-  ctx.clearRect(nr.x, nr.y, nr.w, nr.h);
-  ctx.strokeStyle = "rgba(255,255,255,0.95)";
-  ctx.lineWidth = lineW;
-  ctx.strokeRect(nr.x + 0.5, nr.y + 0.5, nr.w - 1, nr.h - 1);
+  // Активируем кнопку, если есть хотя бы 3 точки в полигоне
+  if (state.addPolygonPoints.length >= 3 && els.addCutoutBtn) {
+    els.addCutoutBtn.disabled = false;
+  }
+
+  if (nr) {
+    ctx.fillStyle = "rgba(0,0,0,0.35)";
+    ctx.fillRect(0, 0, canvas.width, canvas.height);
+    ctx.clearRect(nr.x, nr.y, nr.w, nr.h);
+    ctx.strokeStyle = "rgba(255,255,255,0.95)";
+    ctx.lineWidth = lineW;
+    ctx.strokeRect(nr.x + 0.5, nr.y + 0.5, nr.w - 1, nr.h - 1);
+  }
+
+  drawPolygon();
 }
 
 function resetAddCropSelection() {
   state.addCropRect = null;
   state.addCropActive = false;
   state.addCropPointerId = null;
-  if (els.addCutoutBtn) els.addCutoutBtn.disabled = true;
-  redrawAddCropOverlay();
+  drawAddCropCanvas();
 }
+
+function clearPolygonCanvas() {
+  const canvas = els.addPolygonCanvas;
+  if (!canvas) return;
+  const ctx = canvas.getContext("2d");
+  if (!ctx) return;
+  ctx.clearRect(0, 0, canvas.width, canvas.height);
+}
+
+function drawPolygon() {
+  const canvas = els.addPolygonCanvas;
+  if (!canvas) return;
+  const ctx = canvas.getContext("2d");
+  if (!ctx) return;
+
+  clearPolygonCanvas();
+
+  if (state.addPolygonPoints.length === 0) return;
+
+  // Рисуем полигон
+  ctx.beginPath();
+  ctx.moveTo(state.addPolygonPoints[0].x, state.addPolygonPoints[0].y);
+  for (let i = 1; i < state.addPolygonPoints.length; i++) {
+    ctx.lineTo(state.addPolygonPoints[i].x, state.addPolygonPoints[i].y);
+  }
+  if (state.addPolygonPoints.length >= 3) ctx.closePath();
+  ctx.strokeStyle = "rgba(124, 58, 237, 0.8)";
+  ctx.lineWidth = 3;
+  ctx.stroke();
+  ctx.fillStyle = "rgba(124, 58, 237, 0.15)";
+  ctx.fill();
+
+  // Рисуем точки
+  for (let i = 0; i < state.addPolygonPoints.length; i++) {
+    ctx.beginPath();
+    ctx.arc(state.addPolygonPoints[i].x, state.addPolygonPoints[i].y, 8, 0, Math.PI * 2);
+    ctx.fillStyle = "rgba(124, 58, 237, 0.9)";
+    ctx.fill();
+    ctx.strokeStyle = "white";
+    ctx.lineWidth = 2;
+    ctx.stroke();
+  }
+}
+
+function getPolygonPointerCoords(e) {
+  const canvas = els.addPolygonCanvas;
+  if (!canvas) return null;
+  const rect = canvas.getBoundingClientRect();
+  const scaleX = canvas.width / rect.width;
+  const scaleY = canvas.height / rect.height;
+
+  if (e.touches) {
+    const touch = e.touches[0];
+    return {
+      x: (touch.clientX - rect.left) * scaleX,
+      y: (touch.clientY - rect.top) * scaleY,
+    };
+  }
+  return {
+    x: (e.clientX - rect.left) * scaleX,
+    y: (e.clientY - rect.top) * scaleY,
+  };
+}
+
+function addPolygonPoint(e) {
+  e.preventDefault();
+  const coords = getPolygonPointerCoords(e);
+  if (!coords) return;
+  state.addPolygonPoints.push(coords);
+  drawPolygon();
+}
+
+function undoPolygonPoint() {
+  if (state.addPolygonPoints.length > 0) {
+    state.addPolygonPoints.pop();
+    drawPolygon();
+  }
+}
+
+// Функция для проверки, находится ли точка внутри полигона (алгоритм лучевого пересечения)
+function isPointInPolygon(point, polygon) {
+  let inside = false;
+  for (let i = 0, j = polygon.length - 1; i < polygon.length; j = i++) {
+    const xi = polygon[i].x, yi = polygon[i].y;
+    const xj = polygon[j].x, yj = polygon[j].y;
+
+    const intersect = ((yi > point.y) !== (yj > point.y)) &&
+      (point.x < (xj - xi) * (point.y - yi) / (yj - yi) + xi);
+    if (intersect) inside = !inside;
+  }
+  return inside;
+}
+
+
 
 async function aiCutoutAddPhotoFromRect() {
   const file = state.addPhotoFile;
   const img = els.addPhotoPreview;
-  const canvas = els.addCropCanvas;
-  if (!file || !img || !canvas) return;
+  const cropCanvas = els.addCropCanvas;
+  const polygonCanvas = els.addPolygonCanvas;
+  if (!file || !img || !cropCanvas || !polygonCanvas) return;
 
   const iw = img.naturalWidth || 0;
   const ih = img.naturalHeight || 0;
   if (!iw || !ih) return;
 
-  const nr = normalizeRect(state.addCropRect) ?? { x: 0, y: 0, w: canvas.width, h: canvas.height };
-  if (nr.w < 6 || nr.h < 6) return;
+  let sx, sy, sw, sh;
+  let usePolygon = false;
 
-  const sx = nr.x * (iw / canvas.width);
-  const sy = nr.y * (ih / canvas.height);
-  const sw = nr.w * (iw / canvas.width);
-  const sh = nr.h * (ih / canvas.height);
+  if (state.addPolygonPoints.length >= 3) {
+    usePolygon = true;
+    let minX = Infinity, minY = Infinity, maxX = -Infinity, maxY = -Infinity;
+    for (const p of state.addPolygonPoints) {
+      minX = Math.min(minX, p.x);
+      minY = Math.min(minY, p.y);
+      maxX = Math.max(maxX, p.x);
+      maxY = Math.max(maxY, p.y);
+    }
+    sx = minX * (iw / cropCanvas.width);
+    sy = minY * (ih / cropCanvas.height);
+    sw = (maxX - minX) * (iw / cropCanvas.width);
+    sh = (maxY - minY) * (ih / cropCanvas.height);
+  } else {
+    const nr = normalizeRect(state.addCropRect) ?? { x: 0, y: 0, w: cropCanvas.width, h: cropCanvas.height };
+    if (nr.w < 6 || nr.h < 6) return;
+    sx = nr.x * (iw / cropCanvas.width);
+    sy = nr.y * (ih / cropCanvas.height);
+    sw = nr.w * (iw / cropCanvas.width);
+    sh = nr.h * (ih / cropCanvas.height);
+  }
 
   const outW = Math.max(1, Math.round(sw));
   const outH = Math.max(1, Math.round(sh));
@@ -772,7 +902,32 @@ async function aiCutoutAddPhotoFromRect() {
   crop.height = ch;
   const cctx = crop.getContext("2d");
   if (!cctx) return;
+
+  if (usePolygon) {
+    const minX = state.addPolygonPoints.reduce((m, p) => Math.min(m, p.x), Infinity);
+    const minY = state.addPolygonPoints.reduce((m, p) => Math.min(m, p.y), Infinity);
+    const scaleX = (outW / (Math.max(...state.addPolygonPoints.map(p => p.x)) - minX)) * scale;
+    const scaleY = (outH / (Math.max(...state.addPolygonPoints.map(p => p.y)) - minY)) * scale;
+
+    cctx.beginPath();
+    const transformedPoints = state.addPolygonPoints.map(p => ({
+      x: (p.x - minX) * (iw / cropCanvas.width) * scale,
+      y: (p.y - minY) * (ih / cropCanvas.height) * scale
+    }));
+    cctx.moveTo(transformedPoints[0].x, transformedPoints[0].y);
+    for (let i = 1; i < transformedPoints.length; i++) {
+      cctx.lineTo(transformedPoints[i].x, transformedPoints[i].y);
+    }
+    cctx.closePath();
+    cctx.save();
+    cctx.clip();
+  }
+
   cctx.drawImage(img, sx, sy, sw, sh, 0, 0, cw, ch);
+
+  if (usePolygon) {
+    cctx.restore();
+  }
 
   setText(els.addCutoutStatus, "Вырезаю…");
 
@@ -825,6 +980,8 @@ async function aiCutoutAddPhotoFromRect() {
     state.addPhotoFile = cut;
 
     resetAddCropSelection();
+    state.addPolygonPoints = [];
+    drawPolygon();
     const url = URL.createObjectURL(cut);
     setAddPhotoPreviewUrl(url);
     if (els.addPhotoPreview) els.addPhotoPreview.src = url;
@@ -1469,14 +1626,16 @@ function openAddModal({ prefillType } = {}) {
 
   state.addPhotoFile = null;
   state.addDetectNonce += 1;
+  state.addPolygonPoints = [];
   if (els.addPhotoInput) els.addPhotoInput.value = "";
   if (els.addPhotoPreview) els.addPhotoPreview.src = "";
   setAddPhotoPreviewUrl(null);
   els.addPhotoPreviewWrap?.classList.remove("preview--show");
   setText(els.addAutoColor, "");
-  setText(els.addCropHint, "Обведи вокруг вещи рамкой — я вырежу её без фона.");
+  setText(els.addCropHint, "Тапни по фото, чтобы добавить точки — обведи ими одежду. Затем нажми «Вырезать».");
   setText(els.addCutoutStatus, "");
   resetAddCropSelection();
+  clearPolygonCanvas();
 
   const typeSelect = els.itemForm?.querySelector('select[name="type"]');
   const colorInput = els.itemForm?.querySelector('input[name="color"]');
@@ -2573,6 +2732,9 @@ if (els.homeLikeOutfitBtn) {
   );
 }
 
+// Инициализация приложения при загрузке страницы
+enterApp();
+
 if (els.addModalBackdrop) els.addModalBackdrop.addEventListener("click", closeAddModal);
 if (els.addCloseBtn) els.addCloseBtn.addEventListener("click", closeAddModal);
 if (els.addNextBtn) els.addNextBtn.addEventListener("click", () => setAddStep("details"));
@@ -2604,7 +2766,9 @@ if (els.addPhotoInput) {
 
     state.addPhotoFile = f;
     resetAddCropSelection();
-    setText(els.addCropHint, "Обведи вокруг вещи рамкой — я вырежу её без фона.");
+    state.addPolygonPoints = [];
+    drawPolygon();
+    setText(els.addCropHint, "Тапни по фото, чтобы добавить точки — обведи ими одежду. Затем нажми «Вырезать».");
     setText(els.addCutoutStatus, "");
 
     const url = URL.createObjectURL(f);
@@ -2678,7 +2842,23 @@ if (els.addCropCanvas) {
   els.addCropCanvas.addEventListener("pointercancel", end);
 }
 
-if (els.addCropResetBtn) els.addCropResetBtn.addEventListener("click", resetAddCropSelection);
+if (els.addCropResetBtn) {
+  els.addCropResetBtn.addEventListener("click", () => {
+    resetAddCropSelection();
+    state.addPolygonPoints = [];
+    drawPolygon();
+  });
+}
+
+if (els.addUndoPointBtn) {
+  els.addUndoPointBtn.addEventListener("click", undoPolygonPoint);
+}
+
+if (els.addPolygonCanvas) {
+  els.addPolygonCanvas.addEventListener("pointerdown", addPolygonPoint);
+  els.addPolygonCanvas.addEventListener("touchstart", addPolygonPoint, { passive: false });
+}
+
 if (els.addCutoutBtn) {
   els.addCutoutBtn.addEventListener("click", () => aiCutoutAddPhotoFromRect().catch(() => {}));
 }
