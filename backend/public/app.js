@@ -45,23 +45,19 @@ const els = {
   filterColor: document.getElementById("filterColor"),
   itemsList: document.getElementById("itemsList"),
   itemError: document.getElementById("itemError"),
+  addItemBtn: document.getElementById("addItemBtn"),
+  fabAddBtn: document.getElementById("fabAddBtn"),
+  itemForm: document.getElementById("itemForm"),
+  itemPhoto: document.getElementById("itemPhoto"),
 
   // Avatar screen
   avatarSaveOutfitBtn: document.getElementById("avatarSaveOutfitBtn"),
+  avatarGenderSelect: document.getElementById("avatarGenderSelect"),
 
   // Quick actions
   quickAddItem: document.getElementById("quickAddItem"),
   quickSuggestOutfit: document.getElementById("quickSuggestOutfit"),
   quickGoAvatar: document.getElementById("quickGoAvatar"),
-
-  refreshBtn: document.getElementById("refreshBtn"),
-  addItemBtn: document.getElementById("addItemBtn"),
-  fabAddBtn: document.getElementById("fabAddBtn"),
-  filterType: document.getElementById("filterType"),
-  itemsList: document.getElementById("itemsList"),
-  itemForm: document.getElementById("itemForm"),
-  itemError: document.getElementById("itemError"),
-  itemPhoto: document.getElementById("itemPhoto"),
 
   addModal: document.getElementById("addModal"),
   addModalBackdrop: document.getElementById("addModalBackdrop"),
@@ -428,7 +424,7 @@ function applyFilter(items) {
   });
 }
 
-// Функции для работы с стилем аватара
+// Функции для работы с аватаром
 function getAvatarStyle() {
   return String(storage.avatarStyle || "default").trim();
 }
@@ -443,6 +439,23 @@ function applyAvatarStyle() {
   const style = getAvatarStyle();
   const avatarBase = document.getElementById("avatarBase");
   if (avatarBase) avatarBase.setAttribute("data-style", style);
+}
+
+function getAvatarGender() {
+  return String(storage.avatarGender || "male").trim();
+}
+
+function setAvatarGender(gender) {
+  storage.avatarGender = gender;
+  const avatarBase = document.getElementById("avatarBase");
+  if (avatarBase) avatarBase.setAttribute("data-gender", gender);
+}
+
+function applyAvatarGender() {
+  const gender = getAvatarGender();
+  const avatarBase = document.getElementById("avatarBase");
+  if (avatarBase) avatarBase.setAttribute("data-gender", gender);
+  if (els.avatarGenderSelect) els.avatarGenderSelect.value = gender;
 }
 
 function toTitleWord(s) {
@@ -2468,6 +2481,7 @@ async function enterApp() {
   restoreAvatarSelection();
   restoreAvatarLayerTransforms();
   applyAvatarStyle();
+  applyAvatarGender();
   await renderTopbar();
   setScreen("home");
   await renderWardrobe();
@@ -2488,6 +2502,9 @@ if (els.filterType) els.filterType.addEventListener("change", () => renderWardro
 if (els.filterSeason) els.filterSeason.addEventListener("change", () => renderWardrobe().catch(() => {}));
 if (els.filterColor) els.filterColor.addEventListener("change", () => renderWardrobe().catch(() => {}));
 if (els.searchInput) els.searchInput.addEventListener("input", () => renderWardrobe().catch(() => {}));
+if (els.avatarGenderSelect) {
+  els.avatarGenderSelect.addEventListener("change", () => setAvatarGender(els.avatarGenderSelect.value));
+}
 if (els.addItemBtn) {
   els.addItemBtn.addEventListener("click", () => openAddModal({ prefillType: String(els.filterType?.value ?? "").trim() }));
 }

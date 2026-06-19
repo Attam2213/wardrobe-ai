@@ -4,7 +4,7 @@
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <title>Wardrobe AI</title>
-    <link rel="stylesheet" href="/app/style.css?v=53" />
+    <link rel="stylesheet" href="/app/style.css?v=54" />
   </head>
   <body>
     <div class="app">
@@ -288,6 +288,13 @@
                     <span>Сохранить образ</span>
                   </button>
                 </div>
+                <label class="field">
+                  <div class="field__label">Пол</div>
+                  <select class="input" id="avatarGenderSelect">
+                    <option value="male">Мужской</option>
+                    <option value="female">Женский</option>
+                  </select>
+                </label>
 
                 <div class="avatar" id="avatarStage">
                   <div class="avatar__base" id="avatarBase" aria-hidden="true"></div>
@@ -649,6 +656,6 @@
       </main>
     </div>
 
-    <script type="module" src="/app/app.js?v=51"></script>
+    <script type="module" src="/app/app.js?v=54"></script>
   </body>
 </html>
