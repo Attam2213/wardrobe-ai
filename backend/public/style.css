@@ -1,26 +1,31 @@
+@import url('https://fonts.googleapis.com/css2?family=Manrope:wght@300;400;500;600;700&family=Syne:wght@400;500;600;700&display=swap');
+
 :root {
-  --bg: #f0f4f8;
+  --bg: #fdf2f8;
   --card: #ffffff;
-  --card2: #f8fafc;
-  --text: #1e293b;
+  --card2: #fbf1f5;
+  --text: #0f172a;
   --muted: #64748b;
-  --accent: #8b5cf6;
-  --accent-hover: #7c3aed;
-  --accent-light: #ede9fe;
-  --accent-soft: #f5f3ff;
+  --accent: #d97706;
+  --accent-hover: #c2410c;
+  --accent-light: #fef3c7;
+  --accent-soft: #fff7ed;
+  --primary: #be185d;
+  --primary-hover: #9f1239;
+  --secondary: #ec4899;
   --success: #10b981;
   --warning: #f59e0b;
   --danger: #ef4444;
-  --border: rgba(30, 41, 59, 0.08);
-  --border-strong: rgba(30, 41, 59, 0.15);
+  --border: #f7e3eb;
+  --border-strong: rgba(190, 24, 93, 0.3);
   --shadow-sm: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
-  --shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
-  --shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
-  --shadow-xl: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
+  --shadow: 0 4px 12px rgba(190, 24, 93, 0.12), 0 2px 4px rgba(0, 0, 0, 0.06);
+  --shadow-lg: 0 12px 24px rgba(190, 24, 93, 0.15), 0 4px 12px rgba(0, 0, 0, 0.08);
+  --shadow-xl: 0 24px 36px rgba(190, 24, 93, 0.18), 0 12px 24px rgba(0, 0, 0, 0.08);
   --radius: 16px;
   --radius-sm: 12px;
-  --radius-lg: 20px;
-  --transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+  --radius-lg: 24px;
+  --transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
 * {
@@ -29,7 +34,7 @@
 
 body {
   margin: 0;
-  font-family: -apple-system, BlinkMacSystemFont, "SF Pro Display", "Inter", system-ui, -system-ui, Segoe UI, Roboto, Helvetica, Arial, "Apple Color Emoji", "Segoe UI Emoji";
+  font-family: "Manrope", -apple-system, BlinkMacSystemFont, system-ui, -system-ui, Segoe UI, Roboto, Helvetica, Arial, "Apple Color Emoji", "Segoe UI Emoji";
   background: var(--bg);
   color: var(--text);
   -webkit-font-smoothing: antialiased;
@@ -73,18 +78,24 @@ body {
   display: none;
 }
 
-h2,
+h1, h2,
 h3 {
   margin: 0 0 16px;
   font-weight: 700;
+  font-family: "Syne", -apple-system, BlinkMacSystemFont, system-ui;
+  letter-spacing: -0.02em;
+}
+
+h1 {
+  font-size: clamp(2.5rem, 6vw, 4rem);
 }
 
 h2 {
-  font-size: 24px;
+  font-size: clamp(1.5rem, 3.5vw, 2.25rem);
 }
 
 h3 {
-  font-size: 18px;
+  font-size: clamp(1.125rem, 2.5vw, 1.5rem);
 }
 
 /* Мобильная версия — полный экран без рамок */
@@ -147,14 +158,14 @@ h3 {
 
 .input:focus {
   background: white;
-  border-color: var(--accent);
-  box-shadow: 0 0 0 4px rgba(139, 92, 246, 0.15);
+  border-color: var(--primary);
+  box-shadow: 0 0 0 4px rgba(190, 24, 93, 0.15);
   transform: translateY(-1px);
 }
 
 .btn {
   border: none;
-  background: var(--accent);
+  background: var(--primary);
   color: white;
   border-radius: var(--radius);
   padding: 13px 22px;
@@ -167,14 +178,15 @@ h3 {
   text-decoration: none;
   cursor: pointer;
   transition: var(--transition);
-  box-shadow: 0 4px 6px -1px rgba(139, 92, 246, 0.2);
+  box-shadow: 0 4px 12px rgba(190, 24, 93, 0.25);
   letter-spacing: -0.01em;
+  font-family: "Syne", -apple-system, BlinkMacSystemFont, system-ui;
 }
 
 .btn:hover {
-  background: var(--accent-hover);
+  background: var(--primary-hover);
   transform: translateY(-2px);
-  box-shadow: 0 10px 15px -3px rgba(139, 92, 246, 0.3);
+  box-shadow: 0 10px 24px rgba(190, 24, 93, 0.35);
 }
 
 .btn:active {
@@ -190,8 +202,8 @@ h3 {
 
 .btn--ghost:hover {
   background: var(--accent-soft);
-  border-color: var(--accent);
-  color: var(--accent);
+  border-color: var(--primary);
+  color: var(--primary);
   box-shadow: var(--shadow);
   transform: translateY(-2px);
 }
@@ -239,7 +251,7 @@ h3 {
   justify-content: space-between;
   gap: 16px;
   align-items: flex-start;
-  background: linear-gradient(135deg, var(--accent-soft) 0%, var(--card) 100%);
+  background: linear-gradient(135deg, #fff7ed 0%, var(--card) 100%);
   border-bottom: 1px solid var(--border);
 }
 
@@ -368,8 +380,8 @@ h3 {
 
 .nav__btn--active {
   color: white;
-  background: var(--accent);
-  box-shadow: 0 4px 6px -1px rgba(139, 92, 246, 0.3);
+  background: var(--primary);
+  box-shadow: 0 4px 12px rgba(190, 24, 93, 0.35);
 }
 
 .icon {
@@ -452,7 +464,7 @@ h3 {
 .tile:hover {
   transform: translateY(-3px);
   box-shadow: var(--shadow-lg);
-  border-color: var(--accent);
+  border-color: var(--primary);
 }
 
 .tile:active {
@@ -516,7 +528,7 @@ h3 {
 
 .quick-action:hover {
   background: var(--accent-soft);
-  border-color: var(--accent);
+  border-color: var(--primary);
   box-shadow: var(--shadow);
   transform: translateY(-2px);
 }
@@ -583,11 +595,12 @@ h3 {
   border: none;
   border-radius: 12px;
   background: transparent;
-  color: var(--accent);
+  color: var(--primary);
   font-size: 13px;
   font-weight: 600;
   cursor: pointer;
   transition: background 0.2s ease;
+  font-family: "Syne", -apple-system, BlinkMacSystemFont, system-ui;
 }
 
 .section-header__action:hover {
@@ -627,8 +640,8 @@ h3 {
 }
 
 .chip--active {
-  border-color: rgba(124, 58, 237, 0.45);
-  background: rgba(124, 58, 237, 0.12);
+  border-color: rgba(190, 24, 93, 0.45);
+  background: rgba(190, 24, 93, 0.12);
 }
 
 .modal {
@@ -771,11 +784,11 @@ h3 {
 }
 
 .avatar {
-  border: 1px dashed rgba(124, 58, 237, 0.5);
+  border: 1px dashed rgba(190, 24, 93, 0.5);
   border-radius: 18px;
   padding: 18px;
   min-height: 420px;
-  background: rgba(124, 58, 237, 0.06);
+  background: rgba(190, 24, 93, 0.06);
   display: flex;
   flex-direction: column;
   gap: 10px;
@@ -785,7 +798,7 @@ h3 {
 }
 
 .avatar__layer--active {
-  outline: 2px solid rgba(124, 58, 237, 0.55);
+  outline: 2px solid rgba(190, 24, 93, 0.55);
   outline-offset: 6px;
 }
 
@@ -1141,12 +1154,12 @@ h3 {
   height: 64px;
   border-radius: 50%;
   border: none;
-  background: var(--accent);
+  background: var(--primary);
   color: white;
   display: flex;
   align-items: center;
   justify-content: center;
-  box-shadow: 0 10px 30px rgba(59, 130, 246, 0.35);
+  box-shadow: 0 10px 30px rgba(190, 24, 93, 0.35);
   cursor: pointer;
   z-index: 60;
   transition: all 0.2s ease;
@@ -1154,7 +1167,7 @@ h3 {
 
 .fab:hover {
   transform: scale(1.08) translateY(-2px);
-  box-shadow: 0 15px 40px rgba(59, 130, 246, 0.45);
+  box-shadow: 0 15px 40px rgba(190, 24, 93, 0.45);
 }
 
 .fab:active {
@@ -1189,9 +1202,9 @@ h3 {
   gap: 20px;
   align-items: center;
   padding: 24px;
-  background: linear-gradient(135deg, var(--accent-light), #f0f9ff);
+  background: linear-gradient(135deg, var(--accent-light), #fff7ed);
   border-radius: 20px;
-  border: 1px solid rgba(59, 130, 246, 0.15);
+  border: 1px solid rgba(217, 119, 6, 0.15);
 }
 
 .weather-icon {
@@ -1224,6 +1237,7 @@ h3 {
   font-weight: 700;
   color: var(--text);
   line-height: 1;
+  font-family: "Syne", -apple-system, BlinkMacSystemFont, system-ui;
 }
 
 .weather-desc {
@@ -1288,7 +1302,7 @@ h3 {
 }
 
 .chip--active {
-  background: var(--accent);
+  background: var(--primary);
   color: white;
 }
 
